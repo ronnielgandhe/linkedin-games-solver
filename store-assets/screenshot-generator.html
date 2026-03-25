@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, system-ui; background: #e8e8ed; padding: 30px; }
+  h2 { margin: 30px 0 4px; color: #1d1d1f; font-weight: 600; font-size: 15px; }
+  .note { color: #86868b; font-size: 11px; margin-bottom: 8px; }
+  canvas { display: block; margin-bottom: 40px; }
+</style>
+</head>
+<body>
+
+<h2>Screenshot 1 — Hero</h2>
+<p class="note">Right-click, Save Image As</p>
+<canvas id="ss1" width="1280" height="800"></canvas>
+
+<h2>Screenshot 2 — How It Works</h2>
+<p class="note">Right-click, Save Image As</p>
+<canvas id="ss2" width="1280" height="800"></canvas>
+
+<h2>Screenshot 3 — Games</h2>
+<p class="note">Right-click, Save Image As</p>
+<canvas id="ss3" width="1280" height="800"></canvas>
+
+<script>
+function rr(ctx,x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// Load all game icons first, then draw
+const iconNames = ['sudoku', 'tango', 'queens', 'zip', 'patches'];
+const icons = {};
+let loaded = 0;
+
+iconNames.forEach(name => {
+  const img = new Image();
+  img.onload = () => {
+    icons[name] = img;
+    loaded++;
+    if (loaded === iconNames.length) drawAll();
+  };
+  img.onerror = () => {
+    icons[name] = null;
+    loaded++;
+    if (loaded === iconNames.length) drawAll();
+  };
+  img.src = '../icons/' + name + '.png';
+});
+
+function drawIcon(ctx, img, x, y, size) {
+  if (img) {
+    ctx.save();
+    rr(ctx, x - size/2, y - size/2, size, size, size * 0.2);
+    ctx.clip();
+    ctx.drawImage(img, x - size/2, y - size/2, size, size);
+    ctx.restore();
+  }
+}
+
+function drawAll() {
+
+// ── SS1: Hero ──
+(function(){
+  const ctx = document.getElementById('ss1').getContext('2d');
+  const W=1280, H=800;
+
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#f5f5f7');
+  bg.addColorStop(1, '#e8e8ed');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Headline
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '700 56px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('Solve LinkedIn puzzles.', W/2, 180);
+  ctx.fillText('Instantly.', W/2, 245);
+
+  ctx.fillStyle = '#86868b';
+  ctx.font = '400 21px -apple-system, system-ui';
+  ctx.fillText('One click. Five games. Under two seconds.', W/2, 300);
+
+  // Popup card
+  const px=440, py=340, pw=400, ph=410;
+
+  ctx.shadowColor = 'rgba(0,0,0,0.04)';
+  ctx.shadowBlur = 80;
+  ctx.shadowOffsetY = 20;
+  rr(ctx, px, py, pw, ph, 16);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.shadowColor = 'rgba(0,0,0,0.08)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 4;
+  rr(ctx, px, py, pw, ph, 16);
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 0.5;
+  rr(ctx, px, py, pw, ph, 16);
+  ctx.stroke();
+
+  // Header
+  rr(ctx, px, py, pw, 52, 16);
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = '#0A66C2';
+  ctx.fillRect(px, py, pw, 52);
+  ctx.restore();
+  ctx.fillStyle = '#0A66C2';
+  ctx.fillRect(px, py+40, pw, 12);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '600 16px -apple-system, system-ui';
+  ctx.textAlign = 'left';
+  ctx.fillText('Game Solver', px+16, py+32);
+  ctx.font = '400 11px -apple-system, system-ui';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillText('v1.1', px+pw-14, py+32);
+
+  // Game rows WITH icons
+  const games = [
+    { name: 'Mini Sudoku', desc: '6\u00D76 number grid', color: '#0A66C2', icon: 'sudoku' },
+    { name: 'Tango', desc: 'Suns & moons puzzle', color: '#D97706', icon: 'tango' },
+    { name: 'Queens', desc: 'Place the queens', color: '#DB2777', icon: 'queens' },
+    { name: 'Zip', desc: 'Connect the path', color: '#059669', icon: 'zip' },
+    { name: 'Patches', desc: 'Fill with shapes', color: '#7C3AED', icon: 'patches' },
+  ];
+
+  let cy = py + 62;
+  games.forEach((g, i) => {
+    // Game icon
+    const iconImg = icons[g.icon];
+    if (iconImg) {
+      ctx.save();
+      rr(ctx, px + 14, cy + 6, 36, 36, 8);
+      ctx.clip();
+      ctx.drawImage(iconImg, px + 14, cy + 6, 36, 36);
+      ctx.restore();
+    }
+
+    // Name
+    ctx.fillStyle = '#1d1d1f';
+    ctx.font = '500 15px -apple-system, system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText(g.name, px + 58, cy + 22);
+
+    // Desc
+    ctx.fillStyle = '#AAA';
+    ctx.font = '400 12px -apple-system, system-ui';
+    ctx.fillText(g.desc, px + 58, cy + 38);
+
+    // Chevron
+    ctx.fillStyle = '#CCC';
+    ctx.font = '400 18px -apple-system, system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText('\u203A', px + pw - 16, cy + 30);
+
+    // Separator
+    if (i < 4) {
+      ctx.fillStyle = '#F5F5F5';
+      ctx.fillRect(px + 58, cy + 50, pw - 72, 1);
+    }
+    cy += 52;
+  });
+
+  // Solved bar
+  const sy = cy + 16;
+  rr(ctx, px + 12, sy, pw - 24, 38, 8);
+  ctx.fillStyle = '#F0FDF4';
+  ctx.fill();
+  ctx.strokeStyle = '#D1FAE5';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#16A34A';
+  ctx.font = '500 13px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u2713  Solved in 0.8s', px + pw/2, sy + 24);
+})();
+
+// ── SS2: How it works ──
+(function(){
+  const ctx = document.getElementById('ss2').getContext('2d');
+  const W=1280, H=800;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = '#0A66C2';
+  ctx.font = '600 13px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('HOW IT WORKS', W/2, 160);
+
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '700 48px -apple-system, system-ui';
+  ctx.fillText('Three steps. That\u2019s it.', W/2, 220);
+
+  const steps = [
+    { num: '1', title: 'Click', desc: 'Open the extension\nfrom your toolbar.' },
+    { num: '2', title: 'Pick', desc: 'Choose any of the\nfive LinkedIn games.' },
+    { num: '3', title: 'Done', desc: 'Solved and filled in.\nAutomatically.' },
+  ];
+
+  const cw = 240, gap = 120;
+  const sx = (W - cw*3 - gap*2) / 2;
+
+  steps.forEach((step, i) => {
+    const x = sx + i*(cw+gap), cy = 380;
+
+    ctx.fillStyle = '#0A66C2';
+    ctx.font = '700 64px -apple-system, system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(step.num, x + cw/2, cy);
+    ctx.textBaseline = 'alphabetic';
+
+    ctx.fillStyle = '#1d1d1f';
+    ctx.font = '600 24px -apple-system, system-ui';
+    ctx.fillText(step.title, x + cw/2, cy + 50);
+
+    ctx.fillStyle = '#86868b';
+    ctx.font = '400 16px -apple-system, system-ui';
+    step.desc.split('\n').forEach((l, li) => {
+      ctx.fillText(l, x + cw/2, cy + 85 + li*24);
+    });
+
+    if (i < 2) {
+      ctx.strokeStyle = '#e5e5ea';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + cw + 20, cy);
+      ctx.lineTo(x + cw + gap - 20, cy);
+      ctx.stroke();
+    }
+  });
+
+  ctx.fillStyle = '#c7c7cc';
+  ctx.font = '400 14px -apple-system, system-ui';
+  ctx.fillText('No accounts  \u00B7  No tracking  \u00B7  100% local', W/2, 620);
+})();
+
+// ── SS3: Games with icons ──
+(function(){
+  const ctx = document.getElementById('ss3').getContext('2d');
+  const W=1280, H=800;
+
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, '#f5f5f7');
+  bg.addColorStop(1, '#e8e8ed');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle = '#0A66C2';
+  ctx.font = '600 13px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('SUPPORTED GAMES', W/2, 100);
+
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '700 48px -apple-system, system-ui';
+  ctx.fillText('Five puzzles. All solved.', W/2, 155);
+
+  const games = [
+    { name: 'Mini Sudoku', desc: 'Fills the 6\u00D76 grid\nwith row, column &\nbox constraints.', color: '#0A66C2', icon: 'sudoku' },
+    { name: 'Tango', desc: 'Places suns & moons\nwith adjacency and\nbalance rules.', color: '#D97706', icon: 'tango' },
+    { name: 'Queens', desc: 'Positions queens on\ncolored regions with\nno conflicts.', color: '#DB2777', icon: 'queens' },
+    { name: 'Zip', desc: 'Traces the complete\npath through every\ncell in order.', color: '#059669', icon: 'zip' },
+    { name: 'Patches', desc: 'Fills the grid with\nrectangles matching\nthe size clues.', color: '#7C3AED', icon: 'patches' },
+  ];
+
+  const cw = 200, ch = 260, gap = 24;
+  const totalW = cw*5 + gap*4;
+  const startX = (W - totalW) / 2;
+  const cardY = 210;
+
+  games.forEach((g, i) => {
+    const x = startX + i * (cw + gap);
+
+    // Card shadow + fill
+    ctx.shadowColor = 'rgba(0,0,0,0.04)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 2;
+    rr(ctx, x, cardY, cw, ch, 14);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+    ctx.lineWidth = 0.5;
+    rr(ctx, x, cardY, cw, ch, 14);
+    ctx.stroke();
+
+    // Color bar
+    ctx.save();
+    rr(ctx, x, cardY, cw, ch, 14);
+    ctx.clip();
+    ctx.fillStyle = g.color;
+    ctx.fillRect(x, cardY, cw, 3);
+    ctx.restore();
+
+    // Game icon
+    const iconImg = icons[g.icon];
+    if (iconImg) {
+      const iconSize = 48;
+      ctx.save();
+      rr(ctx, x + cw/2 - iconSize/2, cardY + 20, iconSize, iconSize, 10);
+      ctx.clip();
+      ctx.drawImage(iconImg, x + cw/2 - iconSize/2, cardY + 20, iconSize, iconSize);
+      ctx.restore();
+    }
+
+    // Name
+    ctx.fillStyle = '#1d1d1f';
+    ctx.font = '600 17px -apple-system, system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(g.name, x + cw/2, cardY + 90);
+
+    // Thin accent line
+    ctx.fillStyle = g.color;
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(x + cw/2 - 20, cardY + 100, 40, 1);
+    ctx.globalAlpha = 1;
+
+    // Desc
+    ctx.fillStyle = '#86868b';
+    ctx.font = '400 12.5px -apple-system, system-ui';
+    g.desc.split('\n').forEach((l, li) => {
+      ctx.fillText(l, x + cw/2, cardY + 122 + li*17);
+    });
+
+    // Check
+    ctx.fillStyle = '#34c759';
+    ctx.font = '500 12px -apple-system, system-ui';
+    ctx.fillText('\u2713 Auto', x + cw/2, cardY + ch - 22);
+  });
+
+  // Stats
+  const statY = 560;
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '600 36px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('< 2 seconds', W/2, statY);
+
+  ctx.fillStyle = '#86868b';
+  ctx.font = '400 18px -apple-system, system-ui';
+  ctx.fillText('average solve time across all games', W/2, statY + 35);
+
+  // Feature pills
+  const features = ['Privacy-first', 'Lightweight', 'Open source'];
+  const pillY = statY + 90;
+  let pillX = W/2 - 220;
+  features.forEach(f => {
+    ctx.font = '500 14px -apple-system, system-ui';
+    const tw = ctx.measureText(f).width;
+    const pw2 = tw + 32, ph = 34;
+    rr(ctx, pillX, pillY, pw2, ph, 17);
+    ctx.fillStyle = '#f5f5f7';
+    ctx.fill();
+    ctx.strokeStyle = '#d1d1d6';
+    ctx.lineWidth = 1;
+    rr(ctx, pillX, pillY, pw2, ph, 17);
+    ctx.stroke();
+    ctx.fillStyle = '#1d1d1f';
+    ctx.textAlign = 'center';
+    ctx.fillText(f, pillX + pw2/2, pillY + 22);
+    pillX += pw2 + 20;
+  });
+})();
+
+} // end drawAll
+</script>
+</body>
+</html>

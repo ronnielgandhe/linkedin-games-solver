@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui; background: #e8e8ed; padding: 30px; }
+  h2 { margin: 20px 0 4px; color: #1d1d1f; font-weight: 600; font-size: 15px; }
+  .note { color: #86868b; font-size: 11px; margin-bottom: 8px; }
+  canvas { display: block; margin-bottom: 30px; }
+</style>
+</head>
+<body>
+
+<h2>Small promo tile (440x280)</h2>
+<p class="note">Right-click, Save Image As</p>
+<canvas id="small" width="440" height="280"></canvas>
+
+<h2>Marquee promo tile (1400x560)</h2>
+<p class="note">Right-click, Save Image As</p>
+<canvas id="marquee" width="1400" height="560"></canvas>
+
+<script>
+function rr(ctx,x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function drawIcon(ctx, cx, cy, s) {
+  const r = s * 0.22;
+  ctx.save();
+  ctx.translate(cx - s/2, cy - s/2);
+
+  rr(ctx, 0, 0, s, s, r);
+  const g = ctx.createLinearGradient(0, 0, 0, s);
+  g.addColorStop(0, '#0077B5');
+  g.addColorStop(1, '#005E93');
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  const pad = s*0.23, gs = s - pad*2, cs = gs/3;
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = s * 0.008;
+  for (let i = 1; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(pad+i*cs, pad+3); ctx.lineTo(pad+i*cs, pad+gs-3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad+3, pad+i*cs); ctx.lineTo(pad+gs-3, pad+i*cs); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  rr(ctx, pad, pad, gs, gs, s*0.04);
+  ctx.stroke();
+
+  [[0,1],[1,0],[1,2],[2,1]].forEach(([r2,c2]) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(pad+c2*cs+2, pad+r2*cs+2, cs-4, cs-4);
+  });
+
+  const mx = pad+1.5*cs, my = pad+1.5*cs;
+  ctx.strokeStyle = '#FFF';
+  ctx.lineWidth = s * 0.024;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(mx-s*0.055, my+s*0.008);
+  ctx.lineTo(mx-s*0.015, my+s*0.047);
+  ctx.lineTo(mx+s*0.063, my-s*0.04);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ── Small promo (440x280) ──
+(function(){
+  const ctx = document.getElementById('small').getContext('2d');
+  const W=440, H=280;
+
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, '#f5f5f7');
+  bg.addColorStop(1, '#e8e8ed');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Icon
+  drawIcon(ctx, W/2, 100, 80);
+
+  // Title
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '700 22px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('LinkedIn Game Solver', W/2, 175);
+
+  // Subtitle
+  ctx.fillStyle = '#86868b';
+  ctx.font = '400 14px -apple-system, system-ui';
+  ctx.fillText('Solve every daily puzzle instantly.', W/2, 200);
+
+  // Game dots
+  const colors = ['#0A66C2','#D97706','#DB2777','#059669','#7C3AED'];
+  const names = ['Sudoku','Tango','Queens','Zip','Patches'];
+  const totalW2 = names.length * 60;
+  let dx = (W - totalW2) / 2 + 30;
+  colors.forEach((c, i) => {
+    ctx.beginPath();
+    ctx.arc(dx, 238, 4, 0, Math.PI*2);
+    ctx.fillStyle = c;
+    ctx.fill();
+    ctx.fillStyle = '#86868b';
+    ctx.font = '400 11px -apple-system, system-ui';
+    ctx.fillText(names[i], dx, 256);
+    dx += 60;
+  });
+})();
+
+// ── Marquee promo (1400x560) ──
+(function(){
+  const ctx = document.getElementById('marquee').getContext('2d');
+  const W=1400, H=560;
+
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, '#f5f5f7');
+  bg.addColorStop(1, '#e8e8ed');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Left side — icon + text
+  drawIcon(ctx, 320, H/2 - 30, 120);
+
+  ctx.fillStyle = '#1d1d1f';
+  ctx.font = '700 42px -apple-system, system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('LinkedIn Game Solver', 320, H/2 + 70);
+
+  ctx.fillStyle = '#86868b';
+  ctx.font = '400 18px -apple-system, system-ui';
+  ctx.fillText('One click. Five games. Instant.', 320, H/2 + 100);
+
+  // Right side — minimal game cards
+  const games = [
+    { name: 'Sudoku', color: '#0A66C2' },
+    { name: 'Tango', color: '#D97706' },
+    { name: 'Queens', color: '#DB2777' },
+    { name: 'Zip', color: '#059669' },
+    { name: 'Patches', color: '#7C3AED' },
+  ];
+
+  const cardW = 140, cardH = 160, gap = 20;
+  const startX = 660;
+  const cardY = (H - cardH) / 2;
+
+  games.forEach((g, i) => {
+    const x = startX + i * (cardW + gap);
+
+    ctx.shadowColor = 'rgba(0,0,0,0.04)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 2;
+    rr(ctx, x, cardY, cardW, cardH, 12);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    ctx.save();
+    rr(ctx, x, cardY, cardW, cardH, 12);
+    ctx.clip();
+    ctx.fillStyle = g.color;
+    ctx.fillRect(x, cardY, cardW, 3);
+    ctx.restore();
+
+    ctx.fillStyle = '#1d1d1f';
+    ctx.font = '600 15px -apple-system, system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(g.name, x + cardW/2, cardY + 75);
+
+    ctx.fillStyle = '#34c759';
+    ctx.font = '500 12px -apple-system, system-ui';
+    ctx.fillText('\u2713 Auto', x + cardW/2, cardY + cardH - 30);
+  });
+})();
+</script>
+</body>
+</html>

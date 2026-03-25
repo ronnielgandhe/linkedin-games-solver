@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { margin: 40px; background: #f5f5f7; font-family: -apple-system, system-ui; }
+  canvas { display: block; }
+  .label { color: #86868b; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<canvas id="icon" width="128" height="128"></canvas>
+<div class="label">128 x 128 — Right-click, Save Image As</div>
+<script>
+const ctx = document.getElementById('icon').getContext('2d');
+const s = 128;
+
+// Smooth rounded rect — Apple-style radius
+const r = 28;
+ctx.beginPath();
+ctx.moveTo(r, 0); ctx.lineTo(s-r, 0); ctx.quadraticCurveTo(s, 0, s, r);
+ctx.lineTo(s, s-r); ctx.quadraticCurveTo(s, s, s-r, s);
+ctx.lineTo(r, s); ctx.quadraticCurveTo(0, s, 0, s-r);
+ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+ctx.closePath();
+
+// LinkedIn gradient
+const g = ctx.createLinearGradient(0, 0, 0, s);
+g.addColorStop(0, '#0077B5');
+g.addColorStop(1, '#005E93');
+ctx.fillStyle = g;
+ctx.fill();
+
+// Clean 3x3 grid
+const pad = 30, gs = s - pad*2, cs = gs/3;
+ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+ctx.lineWidth = 1;
+for (let i = 1; i < 3; i++) {
+  ctx.beginPath(); ctx.moveTo(pad + i*cs, pad + 4); ctx.lineTo(pad + i*cs, pad+gs - 4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad + 4, pad + i*cs); ctx.lineTo(pad+gs - 4, pad + i*cs); ctx.stroke();
+}
+
+// Outer border
+ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+ctx.lineWidth = 1;
+rr(pad, pad, gs, gs, 6);
+ctx.stroke();
+
+function rr(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// Filled cells — soft glass
+[[0,1],[1,0],[1,2],[2,1]].forEach(([r,c]) => {
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  const cx = pad + c*cs + 3, cy2 = pad + r*cs + 3;
+  ctx.fillRect(cx, cy2, cs - 6, cs - 6);
+});
+
+// Checkmark — center cell
+const mx = pad + 1.5*cs, my = pad + 1.5*cs;
+ctx.strokeStyle = '#FFFFFF';
+ctx.lineWidth = 3;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.beginPath();
+ctx.moveTo(mx - 7, my + 1);
+ctx.lineTo(mx - 2, my + 6);
+ctx.lineTo(mx + 8, my - 5);
+ctx.stroke();
+</script>
+</body>
+</html>
