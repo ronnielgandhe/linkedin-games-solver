@@ -110,14 +110,14 @@ async function solveGame(game) {
     // Poll for result from any frame — fast interval for quick detection
     const result = await pollForResult(tab.id, 200, 100);
 
-    if (result && result.needsCDP && result.coords) {
+    if (result && result.needsCDP && result.cellIndices) {
       // Zip: needs trusted clicks via chrome.debugger CDP
       setStatus('solving', 'Executing solution...');
       try {
         const cdpResult = await chrome.runtime.sendMessage({
           type: 'ZIP_SOLVE',
           tabId: tab.id,
-          coords: result.coords,
+          cellIndices: result.cellIndices,
         });
         if (cdpResult && cdpResult.error) {
           setStatus('error', 'CDP: ' + cdpResult.error);

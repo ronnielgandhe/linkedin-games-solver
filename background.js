@@ -2,7 +2,7 @@
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'ZIP_SOLVE') {
-    handleZipDrag(msg.tabId, msg.coords)
+    handleZipDrag(msg.tabId, msg.cellIndices)
       .then(result => sendResponse(result))
       .catch(err => sendResponse({ error: err.message }));
     return true;
@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-async function handleZipDrag(tabId, coords) {
+async function handleZipDrag(tabId, cellIndices) {
   const target = { tabId };
 
   try {
@@ -25,7 +25,52 @@ async function handleZipDrag(tabId, coords) {
   }
 
   try {
-    if (coords.length === 0) return { success: true };
+    if (!cellIndices || cellIndices.length === 0) return { success: true };
+
+    // Resolve coordinates with CDP offset correction
+    // The debugger banner can shift page content, causing getBoundingClientRect
+    // to differ from CDP's coordinate space. We detect the offset using DOM.getBoxModel
+    // on one cell, then apply it to all coordinates from Runtime.evaluate (fast batch).
+    await sleep(200);
+
+    // Step 1: Get all coordinates via fast batch Runtime.evaluate
+    const evalResult = await chrome.debugger.sendCommand(target, 'Runtime.evaluate', {
+      expression: `(function() {
+        return JSON.stringify(${JSON.stringify(cellIndices)}.map(function(idx) {
+          var cell = document.querySelector('[data-cell-idx="' + idx + '"]');
+          if (!cell) return null;
+          var rect = cell.getBoundingClientRect();
+          return [Math.round(rect.left + rect.width / 2), Math.round(rect.top + rect.height / 2)];
+        }));
+      })()`,
+      returnByValue: true,
+    });
+    const jsCoords = JSON.parse(evalResult.result.value);
+    if (!jsCoords || jsCoords.some(c => !c)) {
+      return { error: 'Could not resolve cell coordinates' };
+    }
+
+    // Step 2: Get the first cell's position via CDP DOM.getBoxModel (true CDP coords)
+    const { result: firstNode } = await chrome.debugger.sendCommand(target, 'Runtime.evaluate', {
+      expression: `document.querySelector('[data-cell-idx="${cellIndices[0]}"]')`,
+    });
+    let offsetX = 0, offsetY = 0;
+    if (firstNode.objectId) {
+      try {
+        const boxModel = await chrome.debugger.sendCommand(target, 'DOM.getBoxModel', {
+          objectId: firstNode.objectId,
+        });
+        const quad = boxModel.model.content;
+        const cdpX = Math.round((quad[0] + quad[2] + quad[4] + quad[6]) / 4);
+        const cdpY = Math.round((quad[1] + quad[3] + quad[5] + quad[7]) / 4);
+        offsetX = cdpX - jsCoords[0][0];
+        offsetY = cdpY - jsCoords[0][1];
+      } catch(_) {}
+      try { await chrome.debugger.sendCommand(target, 'Runtime.releaseObject', { objectId: firstNode.objectId }); } catch(_) {}
+    }
+
+    // Step 3: Apply offset to all coordinates
+    const coords = jsCoords.map(([x, y]) => [x + offsetX, y + offsetY]);
 
     const [x0, y0] = coords[0];
 

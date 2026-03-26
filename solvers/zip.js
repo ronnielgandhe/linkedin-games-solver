@@ -83,42 +83,20 @@ void (async () => {
       const fiberKey = Object.keys(cellEls[0]).find(k => k.startsWith('__reactFiber'));
       if (!fiberKey) return false;
 
-      // Find walls array from any cell's fiber
+      // Find walls array and waypoints from fiber
       let wallsArr = null;
-      let gridSize = null;
       for (const cell of cellEls) {
         let current = cell[fiberKey];
         for (let i = 0; i < 15 && current; i++) {
           const props = current.memoizedProps;
           if (props && Array.isArray(props.walls)) {
             wallsArr = props.walls;
-            gridSize = props.gridSize || SIZE;
             break;
           }
           current = current.return;
         }
-        if (wallsArr) break;
+        if (wallsArr !== null) break;
       }
-      if (!wallsArr) return false;
-
-      // Build full grid, then remove walls
-      buildFullGrid();
-
-      for (const wall of wallsArr) {
-        const idx = wall.cellIdx;
-        const row = Math.floor(idx / SIZE), col = idx % SIZE;
-        const key = `${row},${col}`;
-        if (wall.direction === 'WallDirection_DOWN' || wall.direction === 'DOWN') {
-          const nkey = `${row + 1},${col}`;
-          if (conn[key]) conn[key].delete(nkey);
-          if (conn[nkey]) conn[nkey].delete(key);
-        } else if (wall.direction === 'WallDirection_RIGHT' || wall.direction === 'RIGHT') {
-          const nkey = `${row},${col + 1}`;
-          if (conn[key]) conn[key].delete(nkey);
-          if (conn[nkey]) conn[nkey].delete(key);
-        }
-      }
-
       // Extract waypoints from sequenceNo
       fiberWaypoints = {};
       for (const cell of cellEls) {
@@ -135,7 +113,28 @@ void (async () => {
         }
       }
 
-      return avgDeg() > 0 && avgDeg() <= 3.0;
+      // Build full grid, then remove walls
+      buildFullGrid();
+
+      if (wallsArr) {
+        for (const wall of wallsArr) {
+          const idx = wall.cellIdx;
+          const row = Math.floor(idx / SIZE), col = idx % SIZE;
+          const key = `${row},${col}`;
+          if (wall.direction === 'WallDirection_DOWN' || wall.direction === 'DOWN') {
+            const nkey = `${row + 1},${col}`;
+            if (conn[key]) conn[key].delete(nkey);
+            if (conn[nkey]) conn[nkey].delete(key);
+          } else if (wall.direction === 'WallDirection_RIGHT' || wall.direction === 'RIGHT') {
+            const nkey = `${row},${col + 1}`;
+            if (conn[key]) conn[key].delete(nkey);
+            if (conn[nkey]) conn[nkey].delete(key);
+          }
+        }
+      }
+
+      // Accept if we found waypoints (no-walls grids have high avg degree, that's fine)
+      return Object.keys(fiberWaypoints).length >= 2;
     }
 
     // MODE A — Connector elements: non-square children at cell edges
@@ -348,18 +347,13 @@ void (async () => {
       return;
     }
 
-    // --- 7. Compute click coordinates ---
-    const coords = solution.map(s => {
-      const idx = s.row * SIZE + s.col;
-      const cell = cellMap[idx] ? cellMap[idx].el : cellEls[idx];
-      const rect = cell.getBoundingClientRect();
-      return [Math.round(rect.left + rect.width / 2), Math.round(rect.top + rect.height / 2)];
-    });
+    // --- 7. Return cell indices (coordinates resolved after debugger attaches to avoid banner offset) ---
+    const cellIndices = solution.map(s => s.row * SIZE + s.col);
 
     window.__linkedinSolverResult = {
       success: true,
       needsCDP: true,
-      coords,
+      cellIndices,
       message: `Zip solved! ${solution.length} cells (${mode}, setup:${Math.round(t1-t0)}ms solve:${Math.round(t2-t1)}ms)`
     };
   } catch (err) {
