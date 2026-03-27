@@ -79,37 +79,72 @@ void (async () => {
 
     // MODE 0 — React Fiber: read walls & waypoints from game state (most reliable)
     let fiberWaypoints = null;
-    function tryReactFiber() {
-      const fiberKey = Object.keys(cellEls[0]).find(k => k.startsWith('__reactFiber'));
-      if (!fiberKey) return false;
+    function findFiberKey(el) {
+      // Method 1: Object.keys (enumerable own properties)
+      let key = Object.keys(el).find(k => k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance'));
+      if (key) return key;
+      // Method 2: Object.getOwnPropertyNames (all own properties including non-enumerable)
+      try { key = Object.getOwnPropertyNames(el).find(k => k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance')); } catch(_) {}
+      if (key) return key;
+      // Method 3: for...in loop (walks prototype chain)
+      try { for (const k in el) { if (k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance')) return k; } } catch(_) {}
+      return null;
+    }
 
-      // Find walls array and waypoints from fiber
+    function findPropsKey(el) {
+      let key = Object.keys(el).find(k => k.startsWith('__reactProps'));
+      if (key) return key;
+      try { key = Object.getOwnPropertyNames(el).find(k => k.startsWith('__reactProps')); } catch(_) {}
+      if (key) return key;
+      try { for (const k in el) { if (k.startsWith('__reactProps')) return k; } } catch(_) {}
+      return null;
+    }
+
+    function tryReactFiber() {
+      const fiberKey = findFiberKey(cellEls[0]);
+
+      // Try __reactProps as fallback for wall/waypoint data
+      const propsKey = findPropsKey(cellEls[0]);
+
+      if (!fiberKey && !propsKey) return false;
+
+      // Find walls array and waypoints from fiber tree
       let wallsArr = null;
-      for (const cell of cellEls) {
-        let current = cell[fiberKey];
-        for (let i = 0; i < 15 && current; i++) {
-          const props = current.memoizedProps;
-          if (props && Array.isArray(props.walls)) {
-            wallsArr = props.walls;
-            break;
+      if (fiberKey) {
+        for (const cell of cellEls) {
+          let current = cell[fiberKey];
+          for (let i = 0; i < 20 && current; i++) {
+            const props = current.memoizedProps;
+            if (props && Array.isArray(props.walls)) {
+              wallsArr = props.walls;
+              break;
+            }
+            current = current.return;
           }
-          current = current.return;
+          if (wallsArr !== null) break;
         }
-        if (wallsArr !== null) break;
       }
-      // Extract waypoints from sequenceNo
+
+      // Extract waypoints from fiber (sequenceNo) or props
       fiberWaypoints = {};
       for (const cell of cellEls) {
-        let current = cell[fiberKey];
-        for (let i = 0; i < 15 && current; i++) {
-          const props = current.memoizedProps;
-          if (props && props.sequenceNo !== undefined && props.idx !== undefined) {
-            if (props.sequenceNo >= 0) {
-              fiberWaypoints[props.sequenceNo + 1] = props.idx;
+        if (fiberKey) {
+          let current = cell[fiberKey];
+          for (let i = 0; i < 20 && current; i++) {
+            const props = current.memoizedProps;
+            if (props && props.sequenceNo !== undefined && props.idx !== undefined) {
+              if (props.sequenceNo >= 0) fiberWaypoints[props.sequenceNo + 1] = props.idx;
+              break;
             }
-            break;
+            current = current.return;
           }
-          current = current.return;
+        }
+        // Also try __reactProps directly on the cell
+        if (propsKey && Object.keys(fiberWaypoints).length === 0) {
+          const p = cell[propsKey];
+          if (p && p.sequenceNo !== undefined && p.idx !== undefined && p.sequenceNo >= 0) {
+            fiberWaypoints[p.sequenceNo + 1] = p.idx;
+          }
         }
       }
 
@@ -121,11 +156,12 @@ void (async () => {
           const idx = wall.cellIdx;
           const row = Math.floor(idx / SIZE), col = idx % SIZE;
           const key = `${row},${col}`;
-          if (wall.direction === 'WallDirection_DOWN' || wall.direction === 'DOWN') {
+          const dir = wall.direction || '';
+          if (dir.includes('DOWN')) {
             const nkey = `${row + 1},${col}`;
             if (conn[key]) conn[key].delete(nkey);
             if (conn[nkey]) conn[nkey].delete(key);
-          } else if (wall.direction === 'WallDirection_RIGHT' || wall.direction === 'RIGHT') {
+          } else if (dir.includes('RIGHT')) {
             const nkey = `${row},${col + 1}`;
             if (conn[key]) conn[key].delete(nkey);
             if (conn[nkey]) conn[nkey].delete(key);
@@ -133,30 +169,42 @@ void (async () => {
         }
       }
 
-      // Accept if we found waypoints (no-walls grids have high avg degree, that's fine)
+      // Accept if we found waypoints
       return Object.keys(fiberWaypoints).length >= 2;
     }
 
-    // MODE A — Connector elements: non-square children at cell edges
+    // MODE A — Connector elements: non-square children at cell edges indicate connections
     function tryConnectors() {
       resetConn();
       cellEls.forEach(cell => {
         const idx = parseInt(cell.dataset.cellIdx);
         const row = Math.floor(idx / SIZE), col = idx % SIZE;
         const key = `${row},${col}`;
+        const cellRect = cell.getBoundingClientRect();
+        const cellW = cellRect.width, cellH = cellRect.height;
         [...cell.children].forEach(k => {
-          const s = getComputedStyle(k);
-          const w = parseFloat(s.width), h = parseFloat(s.height);
-          const x = parseFloat(s.left), y = parseFloat(s.top);
-          if (isNaN(w) || isNaN(h) || w < 5 || h < 5) return;
-          if (Math.abs(w - h) < Math.min(w, h) * 0.1) return;
-          if (w < h && x > 20) conn[key].add(`${row},${col + 1}`);
-          if (w < h && x < 5)  conn[key].add(`${row},${col - 1}`);
-          if (h < w && y > 20) conn[key].add(`${row + 1},${col}`);
-          if (h < w && y < 5)  conn[key].add(`${row - 1},${col}`);
+          const kRect = k.getBoundingClientRect();
+          const w = kRect.width, h = kRect.height;
+          if (w < 5 || h < 5) return;
+          // Skip square elements (centers, backgrounds)
+          if (Math.abs(w - h) < Math.min(w, h) * 0.15) return;
+          // Position relative to cell
+          const relL = kRect.left - cellRect.left;
+          const relT = kRect.top - cellRect.top;
+          const relR = cellRect.right - kRect.right;
+          const relB = cellRect.bottom - kRect.bottom;
+          if (w < h) {
+            // Taller than wide = vertical connector (left or right)
+            if (relL > cellW * 0.4 && col < SIZE - 1) conn[key].add(`${row},${col + 1}`);
+            if (relL < cellW * 0.1 && col > 0) conn[key].add(`${row},${col - 1}`);
+          } else {
+            // Wider than tall = horizontal connector (up or down)
+            if (relT > cellH * 0.4 && row < SIZE - 1) conn[key].add(`${row + 1},${col}`);
+            if (relT < cellH * 0.1 && row > 0) conn[key].add(`${row - 1},${col}`);
+          }
         });
       });
-      return avgDeg() > 0 && avgDeg() <= 3.0;
+      return avgDeg() > 0 && avgDeg() <= 3.5;
     }
 
     // MODE B — CSS borders: thick border = wall, thin = connection
@@ -203,9 +251,152 @@ void (async () => {
       if (fn()) { mode = name; break; }
     }
 
+    // MODE C — Position-based wall detection: compare gaps between adjacent cells
+    function tryPositionGaps() {
+      resetConn();
+      const rects = {};
+      cellEls.forEach(cell => {
+        const idx = parseInt(cell.dataset.cellIdx);
+        const rect = cell.getBoundingClientRect();
+        rects[idx] = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+      });
+
+      // Detect walls by measuring gaps/overlaps between adjacent cells
+      // Cells with a wall between them have a larger visual gap
+      const hGaps = [], vGaps = [];
+      for (let i = 0; i < TOTAL; i++) {
+        const row = Math.floor(i / SIZE), col = i % SIZE;
+        if (col < SIZE - 1) {
+          const right = rects[i + 1];
+          if (right) hGaps.push(right.left - rects[i].right);
+        }
+        if (row < SIZE - 1) {
+          const below = rects[i + SIZE];
+          if (below) vGaps.push(below.top - rects[i].bottom);
+        }
+      }
+
+      // Find the gap threshold — walls create bigger gaps
+      const allGaps = [...hGaps, ...vGaps].sort((a, b) => a - b);
+      if (allGaps.length === 0) return false;
+      const uniqueGaps = [...new Set(allGaps.map(g => Math.round(g * 2) / 2))].sort((a, b) => a - b);
+      if (uniqueGaps.length < 2 || (uniqueGaps[uniqueGaps.length - 1] - uniqueGaps[0]) < 1) {
+        // All gaps same — can't distinguish walls from non-walls via position
+        return false;
+      }
+      const gapThreshold = (uniqueGaps[0] + uniqueGaps[uniqueGaps.length - 1]) / 2;
+
+      for (let i = 0; i < TOTAL; i++) {
+        const row = Math.floor(i / SIZE), col = i % SIZE;
+        const key = `${row},${col}`;
+        // Right neighbor
+        if (col < SIZE - 1) {
+          const gap = rects[i + 1] ? rects[i + 1].left - rects[i].right : 999;
+          if (gap < gapThreshold) {
+            conn[key].add(`${row},${col + 1}`);
+            conn[`${row},${col + 1}`].add(key);
+          }
+        }
+        // Bottom neighbor
+        if (row < SIZE - 1) {
+          const gap = rects[i + SIZE] ? rects[i + SIZE].top - rects[i].bottom : 999;
+          if (gap < gapThreshold) {
+            conn[key].add(`${row + 1},${col}`);
+            conn[`${row + 1},${col}`].add(key);
+          }
+        }
+      }
+      return avgDeg() > 0;
+    }
+
+    // MODE D — Wall children: detect dark/thick bar elements between cells
+    function tryWallChildren() {
+      // Start with full connectivity, then remove walls detected via child elements
+      buildFullGrid();
+      let wallsFound = 0;
+
+      cellEls.forEach(cell => {
+        const idx = parseInt(cell.dataset.cellIdx);
+        const row = Math.floor(idx / SIZE), col = idx % SIZE;
+        const key = `${row},${col}`;
+        const cellRect = cell.getBoundingClientRect();
+
+        [...cell.children].forEach(kid => {
+          const s = getComputedStyle(kid);
+          const bg = s.backgroundColor;
+          const w = parseFloat(s.width), h = parseFloat(s.height);
+          const kRect = kid.getBoundingClientRect();
+
+          // Skip invisible, too small, or non-positioned elements
+          if (s.display === 'none' || s.visibility === 'hidden') return;
+          if (w < 3 && h < 3) return;
+
+          // Wall bars are typically dark colored, narrow, and at cell edges
+          const isDark = bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent';
+          const isNarrow = (w < 8 || h < 8); // Wall bars are thin in one dimension
+
+          if (!isDark || !isNarrow) return;
+
+          // Determine wall direction by position relative to cell
+          const relLeft = kRect.left - cellRect.left;
+          const relTop = kRect.top - cellRect.top;
+          const relRight = cellRect.right - kRect.right;
+          const relBottom = cellRect.bottom - kRect.bottom;
+
+          if (h < w) {
+            // Horizontal bar — wall on top or bottom
+            if (relTop < 5 && row > 0) {
+              // Wall on top edge
+              const nkey = `${row - 1},${col}`;
+              conn[key].delete(nkey);
+              conn[nkey]?.delete(key);
+              wallsFound++;
+            } else if (relBottom < 5 && row < SIZE - 1) {
+              // Wall on bottom edge
+              const nkey = `${row + 1},${col}`;
+              conn[key].delete(nkey);
+              conn[nkey]?.delete(key);
+              wallsFound++;
+            }
+          } else {
+            // Vertical bar — wall on left or right
+            if (relLeft < 5 && col > 0) {
+              const nkey = `${row},${col - 1}`;
+              conn[key].delete(nkey);
+              conn[nkey]?.delete(key);
+              wallsFound++;
+            } else if (relRight < 5 && col < SIZE - 1) {
+              const nkey = `${row},${col + 1}`;
+              conn[key].delete(nkey);
+              conn[nkey]?.delete(key);
+              wallsFound++;
+            }
+          }
+        });
+      });
+
+      // Valid if we found walls AND avg degree is reasonable (not fully connected)
+      return wallsFound > 0 && avgDeg() > 0 && avgDeg() < 3.8;
+    }
+
     if (mode === 'none') {
+      if (tryPositionGaps()) {
+        mode = 'position';
+      } else if (tryWallChildren()) {
+        mode = 'wallkids';
+      }
+    }
+
+    if (mode === 'none') {
+      // Collect diagnostic info for debugging
+      let diagKeys = [];
+      try { diagKeys = Object.getOwnPropertyNames(cellEls[0]).filter(k => k.startsWith('__')).slice(0, 5); } catch(_) {}
+      const childInfo = cellEls[0] ? [...cellEls[0].children].map(k => {
+        const s = getComputedStyle(k);
+        return `${Math.round(parseFloat(s.width))}x${Math.round(parseFloat(s.height))}:${s.backgroundColor?.substring(0, 15)}`;
+      }).join('|') : '';
       const degs = attempts.map(a => { a.fn(); return `${a.name}:${avgDeg().toFixed(1)}`; }).join(' ');
-      window.__linkedinSolverResult = { error: `Zip: all wall detection failed (${degs} kids:${cellEls[0]?.children.length})` };
+      window.__linkedinSolverResult = { error: `Zip: detection failed (${degs} kids:${cellEls[0]?.children.length} ${childInfo} keys:${diagKeys.join(',')})` };
       return;
     }
 
@@ -240,10 +431,12 @@ void (async () => {
       });
     }
 
-    // --- 3. Symmetric connections (for DOM modes; fiber is already symmetric) ---
+    // --- 3. Symmetric connections ---
+    // fiber, position, and fullgrid modes already build symmetric graphs
+    // connector and border modes need symmetry enforcement
     let finalConn;
-    if (mode === 'fiber') {
-      finalConn = conn; // Fiber builds symmetric graph directly
+    if (mode === 'fiber' || mode === 'position' || mode === 'wallkids') {
+      finalConn = conn;
     } else {
       finalConn = {};
       for (const key in conn) finalConn[key] = new Set();
@@ -301,11 +494,14 @@ void (async () => {
       return result;
     }
 
-    function solve() {
+    function solve(timeLimit) {
+      const deadline = performance.now() + timeLimit;
       const path = [waypoints[0]];
       const visited = new Set([`${waypoints[0].row},${waypoints[0].col}`]);
       let nextWp = 1;
+      let iterations = 0;
       function bt() {
+        if (++iterations % 5000 === 0 && performance.now() > deadline) return false;
         if (path.length === totalActive) return nextWp >= waypoints.length;
         const curr = path[path.length - 1];
 
@@ -339,11 +535,12 @@ void (async () => {
     }
 
     const t1 = performance.now();
-    const solution = solve();
+    const solution = solve(10000); // 10 second timeout
     const t2 = performance.now();
 
     if (!solution) {
-      window.__linkedinSolverResult = { error: `No Zip solution (${totalActive} cells, ${waypoints.length} wp, ${mode}, setup:${Math.round(t1-t0)}ms solve:${Math.round(t2-t1)}ms)` };
+      const timedOut = (t2 - t1) > 9000 ? ' TIMEOUT' : '';
+      window.__linkedinSolverResult = { error: `No Zip solution (${totalActive} active, ${waypoints.length} wp, ${mode}, avgDeg:${avgDeg().toFixed(1)}, ${Math.round(t1-t0)}+${Math.round(t2-t1)}ms${timedOut})` };
       return;
     }
 
