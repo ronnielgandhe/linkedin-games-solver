@@ -11,6 +11,7 @@ Everything is in US Eastern local time (EDT in summer, EST in winter), so
 | File | What it is |
 |---|---|
 | `sunday_trend.md` | Readable table: one row per Sunday, 9 AM price and the move to 5 PM, 9 PM and midnight for BTC and SOL, plus a tally. |
+| `sunday_trend.html` | Self-contained page with the same results: pick any end hour, see up/down counts, a Sunday-by-Sunday strip and the full table. Open it in a browser. |
 | `sunday_trend.csv` | Full output: 9 AM price plus the price and percent move at **every** hour from 12 PM to 11 PM and midnight (`price_12`..`price_24`, `pct_12`..`pct_24`). Pick whichever end hour you mean. |
 | `sunday_trend.py` | The calculation. Takes candle CSVs, DST-aware, no dependencies beyond Python 3.9+. |
 | `fetch_data.sh` | Downloads the sources below into `data/` and rebuilds the two outputs. |

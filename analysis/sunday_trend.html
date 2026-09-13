@@ -1,0 +1,268 @@
+<title>Sunday Drift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F3F4F6; --surface:#FFFFFF; --ink:#1C2430; --muted:#5D6673; --line:#D9DDE3; --line-strong:#B8BEC7;
+  --btc:#D97A1A; --sol:#6D4FD6; --up:#1F7FA8; --down:#C0395B; --flat:#8A9099;
+  --up-tint:rgba(31,127,168,.13); --down-tint:rgba(192,57,91,.13); --flat-tint:rgba(138,144,153,.16);
+  --row-hover:rgba(28,36,48,.035); --tip-bg:#1C2430; --tip-ink:#F3F4F6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181D; --surface:#1C2026; --ink:#E6E8EC; --muted:#98A1AD; --line:#2B313A; --line-strong:#3B424D;
+    --btc:#C27428; --sol:#8A76E4; --up:#3E90B9; --down:#CC5E7C; --flat:#7C8591;
+    --up-tint:rgba(62,144,185,.22); --down-tint:rgba(204,94,124,.22); --flat-tint:rgba(124,133,145,.22);
+    --row-hover:rgba(230,232,236,.04); --tip-bg:#E6E8EC; --tip-ink:#15181D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181D; --surface:#1C2026; --ink:#E6E8EC; --muted:#98A1AD; --line:#2B313A; --line-strong:#3B424D;
+  --btc:#C27428; --sol:#8A76E4; --up:#3E90B9; --down:#CC5E7C; --flat:#7C8591;
+  --up-tint:rgba(62,144,185,.22); --down-tint:rgba(204,94,124,.22); --flat-tint:rgba(124,133,145,.22);
+  --row-hover:rgba(230,232,236,.04); --tip-bg:#E6E8EC; --tip-ink:#15181D;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.45;padding-inline:16px;padding-block:28px 56px;-webkit-font-smoothing:antialiased}
+.page{max-width:960px;margin:0 auto;display:grid;gap:24px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px}
+.head h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.015em;line-height:1.1;text-wrap:balance}
+.head p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.control{display:grid;gap:6px}
+.control label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.control select{font:600 15px "Archivo",system-ui,sans-serif;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:8px 36px 8px 12px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238A9099' stroke-width='1.8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px 18px;display:grid;gap:12px;align-content:start}
+.tile-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.asset{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:.01em}
+.asset i{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--asset)}
+.window{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.counts{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.count{display:inline-flex;align-items:baseline;gap:6px;padding:6px 10px;border-radius:8px}
+.count.up{background:var(--up-tint);color:var(--up)}
+.count.down{background:var(--down-tint);color:var(--down)}
+.count.flat{background:var(--flat-tint);color:var(--muted)}
+.count b{font:600 24px/1 "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.count span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;color:var(--muted)}
+.kv dt{margin:0;font-weight:500}
+.kv dd{margin:0;color:var(--ink)}
+.glyphs{letter-spacing:.14em;font-size:13px}
+.glyphs .up{color:var(--up)} .glyphs .down{color:var(--down)} .glyphs .flat{color:var(--flat)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:12px}
+.panel h2,.tablewrap h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:14px;border-radius:2px;display:inline-block}
+.stripscroll{overflow-x:auto;padding-bottom:4px}
+.strip{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;min-width:max-content}
+.strip .lab{font-weight:700;font-size:13px}
+.cells{display:grid;grid-auto-flow:column;grid-auto-columns:8px;gap:2px}
+.cell{width:8px;height:22px;border:0;padding:0;border-radius:2px;background:var(--flat-tint);cursor:default}
+.cell.up{background:var(--up)} .cell.down{background:var(--down)} .cell.flat{background:var(--flat)}
+.cell.approx{background-image:repeating-linear-gradient(135deg,transparent 0 2px,rgba(255,255,255,.55) 2px 4px)}
+.axis{display:grid;grid-auto-flow:column;grid-auto-columns:8px;gap:2px;font-size:11px;color:var(--muted);height:16px}
+.axis span{position:relative;white-space:nowrap}
+.axis span::before{content:"";position:absolute;left:0;top:-4px;width:1px;height:4px;background:var(--line-strong)}
+.tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:12px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+th.num,td.num{text-align:right}
+td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--row-hover)}
+td.date{font-weight:600}
+td.date small{margin-left:8px;font:500 11px "IBM Plex Mono",ui-monospace,monospace;color:var(--muted);letter-spacing:.04em}
+td.num{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;font-size:13.5px}
+th.btc,th.sol{border-top:3px solid var(--asset)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font:500 13px "IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;min-width:96px;justify-content:flex-end}
+.pill.up{background:var(--up-tint);color:var(--up)}
+.pill.down{background:var(--down-tint);color:var(--down)}
+.pill.flat,.pill.na{background:var(--flat-tint);color:var(--muted)}
+.pill .g{font-size:11px}
+.notes{font-size:13px;color:var(--muted);display:grid;gap:8px;max-width:78ch}
+.notes p{margin:0}
+.notes a{color:inherit}
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--tip-bg);color:var(--tip-ink);padding:6px 9px;border-radius:6px;font:500 12px "IBM Plex Mono",ui-monospace,monospace;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px));opacity:0;transition:opacity .12s}
+.tip.show{opacity:1}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+@media (max-width:560px){.head h1{font-size:26px}.tile{padding:14px}.count b{font-size:21px}}
+</style>
+
+<div class="page">
+  <header class="head">
+    <div>
+      <h1>Sunday Drift</h1>
+      <p>BTC/USD and SOL/USD on Sundays: the move from the 9:00 AM Eastern price to the hour you pick, for <span id="n-sundays"></span> Sundays from <span id="range"></span>.</p>
+    </div>
+    <div class="control">
+      <label for="end-hour">Ends at (Eastern)</label>
+      <select id="end-hour"></select>
+    </div>
+  </header>
+
+  <section class="tiles" id="tiles" aria-live="polite"></section>
+
+  <section class="panel">
+    <h2>Every Sunday at a glance, oldest to newest</h2>
+    <div class="legend"><span><i style="background:var(--up)"></i>positive</span><span><i style="background:var(--down)"></i>negative</span><span><i style="background:var(--flat-tint)"></i>no data</span><span><i style="background:var(--down);background-image:repeating-linear-gradient(135deg,transparent 0 2px,rgba(255,255,255,.55) 2px 4px)"></i>approximate</span></div>
+    <div class="stripscroll"><div class="strip" id="strip"></div></div>
+  </section>
+
+  <section class="tablewrap">
+    <h2>Newest first</h2>
+    <div class="scroll">
+      <table id="table">
+        <thead><tr>
+          <th>Sunday</th>
+          <th class="num btc" style="--asset:var(--btc)">BTC 9 AM</th>
+          <th class="num btc" style="--asset:var(--btc)">BTC move</th>
+          <th class="num sol" style="--asset:var(--sol)">SOL 9 AM</th>
+          <th class="num sol" style="--asset:var(--sol)">SOL move</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p><b>Method.</b> The 9 AM price is the open of the first candle at or after 9:00:00 AM in New York (EDT in summer, EST in winter; each row shows which). The end price is the open of the candle at that hour. Midnight means 12:00 AM Monday.</p>
+    <p><b>Sources.</b> BTC/USD: Bitstamp 1-minute candles (a true USD market). SOL/USD: Binance spot SOL/USDT hourly candles; USDT tracks the dollar to within a few hundredths of a percent. Both come from public GitHub datasets refreshed by GitHub Actions, because exchange APIs were not reachable when this was built.</p>
+    <p><b>Approximate rows (≈).</b> Sunday Sep 6, 2026 for SOL uses hourly CoinGecko price snapshots taken about 25 minutes past each hour, because the Binance file had not reached that day yet. Its sign was negative at every end hour regardless of which nearby snapshot is used as the 9 AM reference. The 8 PM snapshot was missing, so that cell is blank.</p>
+    <p><b>Not yet included.</b> A Sunday still in progress appears after the source datasets refresh overnight.</p>
+  </footer>
+</div>
+<div class="tip" id="tip" role="status"></div>
+
+<script>
+const DATA = [{"d":"2025-01-12","a":"BTC","tz":"EST","p9":94606.0,"pct":[0.422,0.531,0.377,0.004,0.057,-0.33,-0.706,-0.114,0.692,-0.458,-0.458,-0.404,-0.183],"approx":false},{"d":"2025-01-12","a":"SOL","tz":"EST","p9":188.05,"pct":[1.032,0.984,0.814,0.452,0.686,0.207,-0.564,0.239,1.372,-0.335,-1.218,-1.611,-1.425],"approx":false},{"d":"2025-01-19","a":"BTC","tz":"EST","p9":104805.0,"pct":[0.017,0.175,0.093,1.194,1.292,-1.201,-1.438,-3.448,-4.847,-4.065,-2.884,-2.866,-2.571],"approx":false},{"d":"2025-01-19","a":"SOL","tz":"EST","p9":282.81,"pct":[-4.904,-4.052,-3.748,-4.706,-1.828,-9.759,-10.562,-10.753,-16.53,-14.448,-17.959,-14.649,-13.843],"approx":false},{"d":"2025-01-26","a":"BTC","tz":"EST","p9":104943.0,"pct":[-0.015,-0.003,0.209,0.127,-0.009,-0.368,-0.593,-2.258,-3.055,-3.544,-3.839,-3.416,-4.37],"approx":false},{"d":"2025-01-26","a":"SOL","tz":"EST","p9":255.22,"pct":[0.051,0.388,0.6,0.419,-0.674,-2.355,-3.162,-5.771,-6.908,-7.601,-7.926,-7.605,-9.474],"approx":false},{"d":"2025-02-02","a":"BTC","tz":"EST","p9":98746.0,"pct":[-0.524,-1.625,-1.757,-0.538,-0.986,-1.779,-0.794,-1.09,-2.283,-5.386,-5.343,-4.721,-5.891],"approx":false},{"d":"2025-02-02","a":"SOL","tz":"EST","p9":212.84,"pct":[-2.904,-4.534,-7.132,-4.374,-4.614,-5.004,-4.304,-4.379,-6.813,-13.146,-11.694,-7.01,-10.792],"approx":false},{"d":"2025-02-09","a":"BTC","tz":"EST","p9":95905.0,"pct":[0.606,0.322,0.35,0.186,0.462,-0.776,-0.049,0.655,0.905,-0.325,-0.036,0.959,1.156],"approx":false},{"d":"2025-02-09","a":"SOL","tz":"EST","p9":196.96,"pct":[2.559,1.528,1.615,1.071,1.244,-0.914,0.127,1.782,3.569,0.711,0.975,2.544,2.046],"approx":false},{"d":"2025-02-16","a":"BTC","tz":"EST","p9":96829.0,"pct":[0.245,0.173,0.058,0.252,0.107,0.369,0.053,-0.788,-0.521,-0.317,-0.614,-0.615,-0.812],"approx":false},{"d":"2025-02-16","a":"SOL","tz":"EST","p9":190.73,"pct":[-0.204,-0.367,-0.765,-0.792,-1.274,-0.928,-0.991,-1.295,-0.902,-0.839,-1.882,-2.307,-3.953],"approx":false},{"d":"2025-02-23","a":"BTC","tz":"EST","p9":95960.0,"pct":[-0.539,-0.315,-0.21,-0.201,-0.176,-0.198,-0.166,0.317,0.307,0.02,-0.148,-0.557,-0.693],"approx":false},{"d":"2025-02-23","a":"SOL","tz":"EST","p9":169.67,"pct":[-1.585,-0.855,-1.061,-1.155,-1.161,-0.949,-1.379,-1.02,-1.798,-3.56,-4.131,-5.098,-6.418],"approx":false},{"d":"2025-03-02","a":"BTC","tz":"EST","p9":85679.0,"pct":[6.507,9.889,8.283,9.16,10.117,9.99,10.005,10.029,8.888,8.592,8.876,8.165,8.357],"approx":false},{"d":"2025-03-02","a":"SOL","tz":"EST","p9":141.58,"pct":[21.578,21.069,19.24,21.606,24.015,23.979,24.862,26.233,23.146,21.797,21.112,19.996,19.72],"approx":false},{"d":"2025-03-09","a":"BTC","tz":"EDT","p9":84531.0,"pct":[-1.766,-2.397,-2.572,-2.21,-2.267,-1.719,-3.196,-4.938,-4.499,-3.86,-3.258,-2.729,-2.958],"approx":false},{"d":"2025-03-09","a":"SOL","tz":"EDT","p9":135.48,"pct":[-3.927,-5.573,-6.614,-5.816,-4.643,-5.285,-5.595,-6.311,-6.614,-5.964,-6.001,-5.861,-6.562],"approx":false},{"d":"2025-03-16","a":"BTC","tz":"EDT","p9":82724.0,"pct":[0.724,1.127,1.48,1.17,0.461,0.586,0.001,-0.765,-0.187,0.395,0.608,0.717,1.196],"approx":false},{"d":"2025-03-16","a":"SOL","tz":"EDT","p9":129.53,"pct":[-0.587,-0.17,0.293,-0.587,-2.0,-1.853,-2.332,-2.91,-2.625,-1.382,-0.973,-1.351,-0.44],"approx":false},{"d":"2025-03-23","a":"BTC","tz":"EDT","p9":84705.0,"pct":[0.556,0.645,0.361,0.307,0.344,0.437,0.569,0.767,1.628,1.546,1.028,1.392,2.178],"approx":false},{"d":"2025-03-23","a":"SOL","tz":"EDT","p9":133.26,"pct":[-0.555,-0.968,-1.493,-1.853,-2.041,-1.966,-1.613,-1.388,-0.308,1.096,-0.203,1.268,3.677],"approx":false},{"d":"2025-03-30","a":"BTC","tz":"EDT","p9":83043.0,"pct":[-0.402,-0.922,-0.787,-0.427,-0.608,-0.532,-0.99,-0.769,-0.814,-1.716,-1.31,-1.361,-1.848],"approx":false},{"d":"2025-03-30","a":"SOL","tz":"EDT","p9":125.07,"pct":[-0.12,-1.095,-0.44,0.927,0.616,0.232,-0.248,0.008,-0.192,-0.999,0.919,1.207,-0.4],"approx":false},{"d":"2025-04-06","a":"BTC","tz":"EDT","p9":82690.0,"pct":[-0.191,-0.895,-2.3,-4.456,-3.742,-4.693,-4.582,-5.679,-5.211,-5.31,-4.358,-5.2,-6.077],"approx":false},{"d":"2025-04-06","a":"SOL","tz":"EDT","p9":116.45,"pct":[-1.28,-2.078,-4.311,-7.522,-7.188,-8.51,-8.167,-8.991,-9.06,-10.004,-7.729,-9.034,-11.318],"approx":false},{"d":"2025-04-13","a":"BTC","tz":"EDT","p9":84451.0,"pct":[-0.735,-0.296,0.352,0.308,-0.566,-1.15,-1.035,-1.346,-0.802,-0.167,-0.269,0.781,0.15],"approx":false},{"d":"2025-04-13","a":"SOL","tz":"EDT","p9":129.79,"pct":[-0.832,-0.139,1.41,1.248,-1.21,-2.365,-1.841,-2.026,-1.086,0.416,0.647,2.797,1.502],"approx":false},{"d":"2025-04-20","a":"BTC","tz":"EDT","p9":84369.0,"pct":[-0.011,0.286,0.254,0.258,0.33,0.96,0.755,0.61,0.981,2.683,3.501,3.584,3.345],"approx":false},{"d":"2025-04-20","a":"SOL","tz":"EDT","p9":136.92,"pct":[-0.716,0.007,-0.409,-0.321,0.197,0.241,0.424,-0.102,0.686,3.119,3.491,2.41,1.804],"approx":false},{"d":"2025-04-27","a":"BTC","tz":"EDT","p9":93765.0,"pct":[0.183,0.156,0.336,0.59,0.752,0.576,0.649,0.219,0.016,-0.354,-0.845,-0.122,0.117],"approx":false},{"d":"2025-04-27","a":"SOL","tz":"EDT","p9":147.83,"pct":[0.805,0.501,0.913,1.285,1.481,0.616,1.021,0.48,0.095,-0.528,-1.928,-1.177,0.372],"approx":false},{"d":"2025-05-04","a":"BTC","tz":"EDT","p9":95484.0,"pct":[-0.009,-0.136,-0.072,-0.087,0.115,0.259,0.224,-0.479,-1.239,-0.797,-1.63,-1.298,-1.477],"approx":false},{"d":"2025-05-04","a":"SOL","tz":"EDT","p9":145.54,"pct":[0.886,0.886,1.12,0.701,0.44,0.976,1.065,-0.261,-1.099,-0.261,-1.594,-0.536,-0.433],"approx":false},{"d":"2025-05-11","a":"BTC","tz":"EDT","p9":104612.0,"pct":[-0.429,-0.576,-0.525,-0.046,-0.141,-0.28,-0.196,-0.74,-0.453,0.021,-0.576,-0.674,-0.486],"approx":false},{"d":"2025-05-11","a":"SOL","tz":"EDT","p9":174.06,"pct":[-2.057,-2.028,-1.247,-0.799,-0.77,-0.988,-0.517,-1.212,-0.494,0.259,-0.184,-0.035,0.483],"approx":false},{"d":"2025-05-18","a":"BTC","tz":"EDT","p9":103970.0,"pct":[1.52,1.799,0.879,0.556,-0.056,0.141,0.271,1.928,2.453,1.264,1.066,0.659,-0.318],"approx":false},{"d":"2025-05-18","a":"SOL","tz":"EDT","p9":171.68,"pct":[2.668,2.429,0.332,-0.833,-2.936,-2.633,-2.394,-0.92,0.944,-2.109,-2.243,-2.825,-3.687],"approx":false},{"d":"2025-05-25","a":"BTC","tz":"EDT","p9":107538.0,"pct":[-0.5,-0.289,-0.123,-0.083,0.205,0.151,-0.026,1.563,1.466,1.914,1.904,1.767,1.99],"approx":false},{"d":"2025-05-25","a":"SOL","tz":"EDT","p9":172.59,"pct":[-1.333,-1.46,-0.944,-0.55,-0.035,-0.388,-0.62,1.333,1.831,2.88,2.289,2.016,2.567],"approx":false},{"d":"2025-06-01","a":"BTC","tz":"EDT","p9":104015.0,"pct":[0.714,1.042,1.065,0.889,1.115,0.956,1.476,1.492,1.598,1.411,1.381,1.032,0.851],"approx":false},{"d":"2025-06-01","a":"SOL","tz":"EDT","p9":151.09,"pct":[2.045,3.17,3.468,2.402,3.17,3.038,3.845,4.044,4.362,4.448,4.613,3.819,2.892],"approx":false},{"d":"2025-06-08","a":"BTC","tz":"EDT","p9":105746.0,"pct":[0.284,0.456,0.386,0.584,0.578,0.436,0.615,0.046,0.043,-0.001,-0.159,-0.126,-0.046],"approx":false},{"d":"2025-06-08","a":"SOL","tz":"EDT","p9":149.54,"pct":[0.769,1.786,2.414,2.889,3.297,3.163,3.263,2.274,1.946,1.899,1.618,1.458,1.337],"approx":false},{"d":"2025-06-15","a":"BTC","tz":"EDT","p9":105310.0,"pct":[0.28,0.269,0.39,0.184,0.013,-0.542,-0.485,-0.014,0.287,0.14,0.489,0.471,0.601],"approx":false},{"d":"2025-06-15","a":"SOL","tz":"EDT","p9":147.68,"pct":[2.14,2.885,3.088,3.399,3.081,0.785,1.937,2.973,3.582,2.932,6.006,5.437,5.356],"approx":false},{"d":"2025-06-22","a":"BTC","tz":"EDT","p9":102790.0,"pct":[-3.732,-3.018,-3.182,-3.233,-3.762,-3.119,-3.484,-1.714,-1.751,-1.774,-1.606,-1.449,-1.522],"approx":false},{"d":"2025-06-22","a":"SOL","tz":"EDT","p9":133.53,"pct":[-3.722,-2.786,-2.284,-3.071,-3.34,-2.981,-3.377,-1.034,-1.363,-0.749,-0.359,-0.517,-0.644],"approx":false},{"d":"2025-06-29","a":"BTC","tz":"EDT","p9":108228.0,"pct":[-0.405,-0.59,-0.6,-0.509,-0.754,-0.771,-0.617,-0.114,0.149,0.474,0.301,0.267,0.306],"approx":false},{"d":"2025-06-29","a":"SOL","tz":"EDT","p9":151.86,"pct":[-0.724,-0.889,-0.29,0.013,-0.441,-0.665,-0.125,0.691,0.961,0.481,0.118,0.099,-0.059],"approx":false},{"d":"2025-07-06","a":"BTC","tz":"EDT","p9":108272.0,"pct":[0.604,0.56,0.611,0.194,0.278,0.406,0.894,0.917,0.886,0.53,0.72,1.034,1.05],"approx":false},{"d":"2025-07-06","a":"SOL","tz":"EDT","p9":149.02,"pct":[1.684,2.745,2.322,1.59,1.517,1.631,2.161,2.322,1.906,1.409,1.483,2.027,1.906],"approx":false},{"d":"2025-07-13","a":"BTC","tz":"EDT","p9":118454.0,"pct":[0.227,0.095,0.247,0.484,0.464,0.548,0.201,0.105,0.579,0.567,0.579,1.041,1.957],"approx":false},{"d":"2025-07-13","a":"SOL","tz":"EDT","p9":162.67,"pct":[-0.387,-1.07,0.006,0.252,-0.086,-0.068,-1.303,-1.156,-0.934,-0.633,0.08,1.371,2.729],"approx":false},{"d":"2025-07-20","a":"BTC","tz":"EDT","p9":118131.0,"pct":[0.521,0.388,0.02,0.233,0.074,0.005,-0.058,-0.482,-0.771,-0.613,-0.637,0.093,0.27],"approx":false},{"d":"2025-07-20","a":"SOL","tz":"EDT","p9":181.78,"pct":[0.104,0.176,-0.66,0.259,0.121,-0.292,0.292,-0.699,-0.187,-0.853,-0.93,1.408,2.712],"approx":false},{"d":"2025-07-27","a":"BTC","tz":"EDT","p9":118167.0,"pct":[0.388,0.805,0.913,0.767,0.712,0.537,0.955,1.165,1.14,0.933,0.77,1.098,0.963],"approx":false},{"d":"2025-07-27","a":"SOL","tz":"EDT","p9":186.42,"pct":[0.032,0.67,0.885,1.057,0.268,0.381,0.826,1.346,1.191,1.765,1.014,2.757,3.712],"approx":false},{"d":"2025-08-03","a":"BTC","tz":"EDT","p9":114017.0,"pct":[-0.059,-0.014,0.097,0.334,0.261,0.346,0.39,0.265,0.2,0.781,0.581,0.704,0.508],"approx":false},{"d":"2025-08-03","a":"SOL","tz":"EDT","p9":161.81,"pct":[0.179,0.235,0.216,0.099,-0.105,-0.21,0.136,0.068,0.105,1.7,0.946,1.557,0.723],"approx":false},{"d":"2025-08-10","a":"BTC","tz":"EDT","p9":118511.0,"pct":[0.258,0.128,-0.002,0.037,0.138,-0.143,0.181,0.469,0.676,0.537,1.256,2.839,2.695],"approx":false},{"d":"2025-08-10","a":"SOL","tz":"EDT","p9":179.53,"pct":[1.12,1.521,1.198,1.771,1.821,1.788,2.211,2.011,1.749,1.097,2.323,3.192,3.119],"approx":false},{"d":"2025-08-17","a":"BTC","tz":"EDT","p9":118221.0,"pct":[0.082,-0.291,-0.208,-0.515,-0.497,-0.442,-0.376,-0.159,-0.639,-0.717,-1.619,-2.275,-2.396],"approx":false},{"d":"2025-08-17","a":"SOL","tz":"EDT","p9":192.23,"pct":[1.691,0.515,0.598,-0.062,-0.551,-0.577,-0.515,0.453,-0.64,-1.077,-2.965,-4.312,-4.973],"approx":false},{"d":"2025-08-24","a":"BTC","tz":"EDT","p9":114627.0,"pct":[-0.226,-0.344,-0.212,-0.032,-1.804,-1.621,-1.433,-1.026,-0.991,-1.74,-1.353,-1.087,-1.509],"approx":false},{"d":"2025-08-24","a":"SOL","tz":"EDT","p9":204.37,"pct":[0.612,1.096,2.437,3.357,0.313,-0.357,0.02,0.352,0.793,-0.431,1.262,4.003,2.383],"approx":false},{"d":"2025-08-31","a":"BTC","tz":"EDT","p9":108329.0,"pct":[0.444,0.559,0.629,0.767,0.57,0.739,0.669,0.535,-0.056,-0.077,-0.152,-0.639,-0.623],"approx":false},{"d":"2025-08-31","a":"SOL","tz":"EDT","p9":203.38,"pct":[0.59,0.856,0.772,1.126,0.605,0.713,0.983,0.177,-1.357,-1.446,-1.185,-2.876,-2.444],"approx":false},{"d":"2025-09-07","a":"BTC","tz":"EDT","p9":111136.0,"pct":[0.176,0.064,-0.141,-0.068,0.117,0.177,-0.067,0.11,0.007,-0.271,-0.223,0.103,-0.101],"approx":false},{"d":"2025-09-07","a":"SOL","tz":"EDT","p9":203.78,"pct":[0.697,-0.157,-0.888,-0.805,-0.344,0.564,0.442,1.629,1.261,0.927,1.526,1.982,1.894],"approx":false},{"d":"2025-09-14","a":"BTC","tz":"EDT","p9":115840.0,"pct":[-0.476,-0.261,-0.199,-0.338,-0.134,0.01,0.24,0.194,-0.452,-0.623,-0.483,-0.366,-0.312],"approx":false},{"d":"2025-09-14","a":"SOL","tz":"EDT","p9":245.27,"pct":[-0.595,-0.045,1.085,-0.245,-1.129,-1.15,-0.457,-0.934,-2.251,-1.867,-1.692,-1.292,-1.068],"approx":false},{"d":"2025-09-21","a":"BTC","tz":"EDT","p9":115742.0,"pct":[-0.128,-0.304,-0.039,-0.123,-0.162,-0.311,-0.236,-0.125,-0.404,-1.11,-1.21,-1.274,-0.894],"approx":false},{"d":"2025-09-21","a":"SOL","tz":"EDT","p9":239.49,"pct":[-0.66,-1.023,-0.693,-0.572,-0.626,-0.772,-0.923,-0.651,-1.391,-3.015,-2.635,-3.253,-2.789],"approx":false},{"d":"2025-09-28","a":"BTC","tz":"EDT","p9":109356.0,"pct":[0.65,0.811,0.804,0.868,0.915,1.358,1.387,2.384,2.603,2.688,2.313,2.229,2.33],"approx":false},{"d":"2025-09-28","a":"SOL","tz":"EDT","p9":198.43,"pct":[2.52,2.832,3.336,3.881,3.906,4.228,4.435,5.604,6.249,5.423,5.533,5.68,5.967],"approx":false},{"d":"2025-10-05","a":"BTC","tz":"EDT","p9":123113.0,"pct":[-0.221,0.15,-0.009,-0.055,-0.393,-0.311,-0.281,0.129,0.33,0.236,0.793,0.863,0.642],"approx":false},{"d":"2025-10-05","a":"SOL","tz":"EDT","p9":231.32,"pct":[-0.514,-0.104,-0.709,-1.012,-1.837,-1.44,-1.128,-1.301,-1.193,-1.137,0.043,0.454,0.393],"approx":false},{"d":"2025-10-12","a":"BTC","tz":"EDT","p9":111841.0,"pct":[1.27,2.082,1.838,1.904,2.319,2.836,2.829,3.125,2.904,3.188,3.561,3.216,2.772],"approx":false},{"d":"2025-10-12","a":"SOL","tz":"EDT","p9":181.7,"pct":[5.245,6.665,7.105,6.681,7.793,8.31,7.672,8.657,8.415,8.536,9.752,8.123,7.221],"approx":false},{"d":"2025-10-19","a":"BTC","tz":"EDT","p9":107623.0,"pct":[0.842,0.96,1.442,1.688,1.239,1.193,1.092,1.455,0.985,0.434,0.45,1.106,2.363],"approx":false},{"d":"2025-10-19","a":"SOL","tz":"EDT","p9":188.89,"pct":[0.995,1.054,0.604,0.551,-0.005,0.413,0.217,0.498,-0.545,-1.731,-1.715,-1.059,1.228],"approx":false},{"d":"2025-10-26","a":"BTC","tz":"EDT","p9":113653.0,"pct":[0.062,-0.127,-0.169,-0.055,-0.05,-0.282,-0.143,0.908,0.79,0.977,1.453,1.084,1.19],"approx":false},{"d":"2025-10-26","a":"SOL","tz":"EDT","p9":198.01,"pct":[0.768,0.369,0.465,0.561,0.434,-0.288,0.232,1.106,1.02,2.641,3.212,3.005,3.192],"approx":false},{"d":"2025-11-02","a":"BTC","tz":"EST","p9":110523.0,"pct":[-0.385,-0.311,-0.189,-0.341,-0.4,-0.476,-0.579,0.001,-0.699,-0.768,-1.355,-2.341,-2.385],"approx":false},{"d":"2025-11-02","a":"SOL","tz":"EST","p9":185.09,"pct":[-0.432,-0.362,-0.454,-0.578,-0.281,0.216,-0.092,1.415,0.805,0.238,-0.875,-4.068,-3.858],"approx":false},{"d":"2025-11-09","a":"BTC","tz":"EST","p9":102895.0,"pct":[0.917,0.708,1.561,1.847,1.68,1.577,1.788,1.732,3.296,2.731,3.018,3.04,3.15],"approx":false},{"d":"2025-11-09","a":"SOL","tz":"EST","p9":160.05,"pct":[1.806,1.093,2.462,3.818,3.299,3.23,3.368,2.799,4.649,4.392,4.817,5.048,4.992],"approx":false},{"d":"2025-11-16","a":"BTC","tz":"EST","p9":95354.0,"pct":[-1.249,-1.096,-1.428,-1.449,-1.373,-2.007,-1.305,-1.225,-0.118,-0.661,-0.475,0.088,-0.331],"approx":false},{"d":"2025-11-16","a":"SOL","tz":"EST","p9":139.46,"pct":[-2.675,-2.603,-2.596,-1.886,-2.015,-2.166,-1.542,-1.642,-0.208,-0.861,-0.409,0.588,0.645],"approx":false},{"d":"2025-11-23","a":"BTC","tz":"EST","p9":86884.0,"pct":[-0.261,-0.2,0.092,0.493,0.641,1.248,1.292,-0.087,-0.211,0.155,0.686,0.614,-0.212],"approx":false},{"d":"2025-11-23","a":"SOL","tz":"EST","p9":131.57,"pct":[0.16,-0.137,0.479,0.623,0.806,1.201,0.836,-0.752,-0.578,-0.053,1.391,1.406,-0.144],"approx":false},{"d":"2025-11-30","a":"BTC","tz":"EST","p9":91766.0,"pct":[0.059,-0.29,-0.335,-0.336,-0.486,-0.639,-0.587,-1.522,-5.182,-4.996,-5.484,-5.911,-6.495],"approx":false},{"d":"2025-11-30","a":"SOL","tz":"EST","p9":139.26,"pct":[0.187,-0.567,-0.467,-1.178,-1.415,-1.601,-1.106,-4.151,-8.394,-8.114,-8.387,-8.825,-9.249],"approx":false},{"d":"2025-12-07","a":"BTC","tz":"EST","p9":89053.0,"pct":[0.956,2.153,2.606,2.675,2.689,1.315,0.618,1.519,1.47,2.092,2.605,2.278,2.511],"approx":false},{"d":"2025-12-07","a":"SOL","tz":"EST","p9":131.72,"pct":[0.19,2.353,3.287,3.044,3.386,1.04,-0.357,0.402,-0.084,1.253,1.769,1.974,2.536],"approx":false},{"d":"2025-12-14","a":"BTC","tz":"EST","p9":89509.0,"pct":[-0.754,-0.779,-0.559,-0.949,-1.054,-1.169,-1.192,-1.496,-1.144,-0.277,-0.219,-0.242,0.176],"approx":false},{"d":"2025-12-14","a":"SOL","tz":"EST","p9":131.64,"pct":[-0.471,-1.215,-0.767,-1.018,-1.223,-1.329,-1.101,-1.709,-1.139,-0.357,-0.084,-0.357,0.144],"approx":false},{"d":"2025-12-21","a":"BTC","tz":"EST","p9":87639.0,"pct":[0.775,0.738,0.88,0.934,0.651,0.567,0.916,1.139,1.093,1.086,0.926,1.257,1.401],"approx":false},{"d":"2025-12-21","a":"SOL","tz":"EST","p9":123.63,"pct":[1.504,1.513,1.23,1.65,1.391,1.011,1.78,1.941,2.119,1.933,1.294,1.933,2.346],"approx":false},{"d":"2025-12-28","a":"BTC","tz":"EST","p9":87819.0,"pct":[-0.086,-0.155,-0.327,-0.414,-0.432,-0.345,0.005,0.059,0.445,0.608,1.419,2.495,2.542],"approx":false},{"d":"2025-12-28","a":"SOL","tz":"EST","p9":124.63,"pct":[-0.265,-0.144,-1.204,-1.067,-0.963,-0.618,-0.313,0.513,1.902,3.29,3.298,3.169,3.161],"approx":false},{"d":"2026-01-04","a":"BTC","tz":"EST","p9":91221.0,"pct":[0.056,0.09,-0.061,-0.123,0.049,0.025,-0.049,0.304,1.264,1.861,1.948,1.769,1.462],"approx":false},{"d":"2026-01-04","a":"SOL","tz":"EST","p9":134.53,"pct":[0.431,0.223,-0.245,-0.729,-0.364,-0.446,-0.268,-0.305,0.758,1.658,1.747,1.568,0.862],"approx":false},{"d":"2026-01-11","a":"BTC","tz":"EST","p9":90730.0,"pct":[0.196,0.138,0.024,-0.202,-0.172,-0.107,-0.356,0.157,0.422,0.607,1.493,1.044,1.443],"approx":false},{"d":"2026-01-11","a":"SOL","tz":"EST","p9":137.24,"pct":[2.04,1.778,2.026,1.589,0.947,1.056,0.714,1.785,2.973,2.783,3.774,3.862,4.008],"approx":false},{"d":"2026-01-18","a":"BTC","tz":"EST","p9":95117.0,"pct":[0.019,0.115,0.31,0.24,0.164,0.285,0.358,-1.567,-2.561,-2.716,-2.72,-2.593,-2.625],"approx":false},{"d":"2026-01-18","a":"SOL","tz":"EST","p9":142.37,"pct":[-0.246,-0.014,0.274,-0.063,0.07,0.204,0.344,-3.161,-6.048,-6.019,-6.013,-5.928,-6.097],"approx":false},{"d":"2026-01-25","a":"BTC","tz":"EST","p9":88784.0,"pct":[-0.938,-1.17,-1.663,-2.69,-2.502,-2.597,-2.643,-2.496,-2.282,-1.358,-1.5,-1.812,-1.298],"approx":false},{"d":"2026-01-25","a":"SOL","tz":"EST","p9":126.97,"pct":[-3.3,-3.741,-4.159,-7.096,-6.805,-6.411,-6.734,-6.395,-5.765,-3.599,-3.891,-4.245,-3.45],"approx":false},{"d":"2026-02-01","a":"BTC","tz":"EST","p9":78252.0,"pct":[-1.061,-0.732,-0.392,-1.477,-1.573,-2.264,-1.384,-1.743,-0.845,-1.035,-2.325,-2.621,-3.099],"approx":false},{"d":"2026-02-01","a":"SOL","tz":"EST","p9":104.45,"pct":[-2.604,-1.924,-0.967,-2.403,-2.738,-3.447,-2.547,-3.514,-2.078,-2.25,-3.542,-4.184,-3.973],"approx":false},{"d":"2026-02-08","a":"BTC","tz":"EST","p9":71467.0,"pct":[-1.542,-1.013,-0.533,-0.119,-0.93,-1.126,-0.621,-1.657,-1.402,-1.585,-1.23,-0.315,-0.733],"approx":false},{"d":"2026-02-08","a":"SOL","tz":"EST","p9":88.57,"pct":[-2.653,-1.818,-0.824,-0.181,-1.897,-2.213,-1.637,-1.784,-1.705,-2.428,-1.75,-1.016,-1.637],"approx":false},{"d":"2026-02-15","a":"BTC","tz":"EST","p9":68900.0,"pct":[0.128,-0.489,-0.707,-0.945,-0.705,-0.128,0.078,-0.157,-0.12,-0.438,-0.872,-0.737,-0.109],"approx":false},{"d":"2026-02-15","a":"SOL","tz":"EST","p9":86.96,"pct":[0.702,-0.61,-0.863,-1.851,-1.242,-0.897,-0.69,-0.931,-0.897,-1.38,-1.794,-2.081,-1.345],"approx":false},{"d":"2026-02-22","a":"BTC","tz":"EST","p9":67633.0,"pct":[-0.038,-0.407,-0.339,-0.352,-0.368,-0.077,0.003,-0.031,-1.356,-4.768,-4.22,-3.992,-4.189],"approx":false},{"d":"2026-02-22","a":"SOL","tz":"EST","p9":83.99,"pct":[-0.488,-1.107,-0.917,-0.822,-1.143,-0.583,-0.488,-1.417,-3.119,-7.168,-7.287,-7.537,-7.858],"approx":false},{"d":"2026-03-01","a":"BTC","tz":"EST","p9":66941.0,"pct":[-1.198,-1.397,-0.929,-1.452,-2.451,-1.891,-2.534,-1.74,-0.65,-0.613,-0.973,-0.179,-0.124],"approx":false},{"d":"2026-03-01","a":"SOL","tz":"EST","p9":86.09,"pct":[-2.439,-2.555,-2.509,-3.322,-4.774,-3.671,-3.914,-2.881,-1.266,-1.708,-2.253,-1.522,-2.068],"approx":false},{"d":"2026-03-08","a":"BTC","tz":"EDT","p9":67325.0,"pct":[-0.165,-0.664,-0.398,-0.756,-0.01,-0.157,-0.478,-1.619,-2.007,-1.432,-1.664,-1.182,-0.163],"approx":false},{"d":"2026-03-08","a":"SOL","tz":"EDT","p9":82.32,"pct":[-0.316,-0.96,-0.765,-0.875,0.194,0.024,-0.073,-0.401,-0.875,0.036,-0.255,0.425,1.02],"approx":false},{"d":"2026-03-15","a":"BTC","tz":"EDT","p9":71620.0,"pct":[-0.176,-0.246,0.293,-0.3,-0.075,0.17,0.702,1.595,1.716,1.287,1.589,1.285,2.753],"approx":false},{"d":"2026-03-15","a":"SOL","tz":"EDT","p9":88.27,"pct":[-0.419,-0.816,0.193,-0.397,-0.091,0.555,1.96,4.962,4.577,4.248,4.35,3.637,5.551],"approx":false},{"d":"2026-03-22","a":"BTC","tz":"EDT","p9":68649.0,"pct":[0.291,0.194,0.039,-0.042,-0.654,-0.691,-1.113,-0.476,-1.159,-1.445,-1.088,-0.505,-0.867],"approx":false},{"d":"2026-03-22","a":"SOL","tz":"EDT","p9":87.27,"pct":[0.355,0.241,-0.011,-0.298,-0.458,-0.791,-1.455,-0.596,-1.215,-1.57,-1.341,-0.642,-1.008],"approx":false},{"d":"2026-03-29","a":"BTC","tz":"EDT","p9":66786.0,"pct":[-0.476,-0.502,-0.681,-0.618,-0.743,-0.356,-0.229,-1.451,-1.235,-0.831,-0.289,0.409,0.467],"approx":false},{"d":"2026-03-29","a":"SOL","tz":"EDT","p9":82.45,"pct":[-0.764,-0.897,-1.079,-0.776,-1.007,-0.631,-0.364,-1.831,-1.213,-0.679,0.328,1.079,0.995],"approx":false},{"d":"2026-04-05","a":"BTC","tz":"EDT","p9":66774.0,"pct":[0.78,0.635,0.86,0.915,0.852,1.294,1.129,2.317,3.341,3.433,2.979,3.615,3.483],"approx":false},{"d":"2026-04-05","a":"SOL","tz":"EDT","p9":79.01,"pct":[0.734,0.582,1.114,1.202,1.038,1.456,0.924,1.987,3.645,4.202,3.405,4.303,3.924],"approx":false},{"d":"2026-04-12","a":"BTC","tz":"EDT","p9":71111.0,"pct":[-0.273,-0.217,0.084,0.083,0.008,0.36,0.398,-0.298,-0.519,0.127,0.162,-0.017,-0.149],"approx":false},{"d":"2026-04-12","a":"SOL","tz":"EDT","p9":82.01,"pct":[-0.512,-0.159,0.22,0.159,-0.037,0.817,0.951,-0.037,-0.573,0.171,0.39,-0.073,-0.134],"approx":false},{"d":"2026-04-19","a":"BTC","tz":"EDT","p9":75606.0,"pct":[0.356,-0.255,-1.053,-1.026,-0.796,-1.249,-1.514,-2.046,-2.344,-1.712,-1.306,-1.516,-1.245],"approx":false},{"d":"2026-04-19","a":"SOL","tz":"EDT","p9":85.79,"pct":[0.653,0.07,-0.758,-0.804,-0.536,-0.979,-1.282,-2.366,-2.704,-2.087,-1.667,-1.842,-1.399],"approx":false},{"d":"2026-04-26","a":"BTC","tz":"EDT","p9":77845.0,"pct":[0.284,0.144,0.258,0.606,0.52,0.484,0.741,0.631,1.055,1.877,1.875,1.684,1.642],"approx":false},{"d":"2026-04-26","a":"SOL","tz":"EDT","p9":86.09,"pct":[0.534,0.383,0.511,0.848,0.929,0.697,0.848,0.743,0.976,1.452,2.01,1.998,1.893],"approx":false},{"d":"2026-05-03","a":"BTC","tz":"EDT","p9":78734.0,"pct":[-0.081,-0.102,-0.006,-0.003,0.042,0.24,0.118,0.555,-0.217,-0.244,1.298,1.825,2.004],"approx":false},{"d":"2026-05-03","a":"SOL","tz":"EDT","p9":84.11,"pct":[0.059,0.048,0.107,0.178,0.309,0.274,0.036,0.666,-0.238,-0.392,0.785,1.367,1.534],"approx":false},{"d":"2026-05-10","a":"BTC","tz":"EDT","p9":80913.0,"pct":[0.618,0.557,0.676,0.44,0.627,-0.247,-0.294,1.41,1.587,0.664,0.717,0.313,-0.243],"approx":false},{"d":"2026-05-10","a":"SOL","tz":"EDT","p9":93.31,"pct":[1.308,1.64,3.408,3.344,3.387,1.286,1.886,3.14,3.376,2.658,2.936,2.133,1.554],"approx":false},{"d":"2026-05-17","a":"BTC","tz":"EDT","p9":78333.0,"pct":[-0.397,-0.415,-0.35,-0.125,0.065,-0.125,0.017,-0.488,-1.167,-1.513,-1.616,-1.951,-1.841],"approx":false},{"d":"2026-05-17","a":"SOL","tz":"EDT","p9":86.76,"pct":[-0.346,-0.519,-0.599,-0.38,0.046,-0.092,0.196,-0.599,-1.764,-1.625,-2.052,-2.167,-2.201],"approx":false},{"d":"2026-05-24","a":"BTC","tz":"EDT","p9":77019.99,"pct":[-0.963,-0.575,-0.533,-0.587,-0.457,-0.597,-1.258,-0.405,-0.059,0.082,-0.224,-0.001,-0.101],"approx":false},{"d":"2026-05-24","a":"SOL","tz":"EDT","p9":86.36,"pct":[-1.227,-0.822,-0.834,-1.1,-1.135,-1.853,-2.779,-1.575,-1.262,-0.996,-1.725,-1.482,-1.633],"approx":false},{"d":"2026-05-31","a":"BTC","tz":"EDT","p9":73810.0,"pct":[-0.358,-0.524,-0.267,-0.412,-0.473,-0.231,-0.046,0.039,-0.328,-0.037,-0.85,-0.156,-0.203],"approx":false},{"d":"2026-05-31","a":"SOL","tz":"EDT","p9":82.82,"pct":[-1.135,-1.497,-1.147,-1.292,-1.485,-1.026,-0.616,-0.362,-0.447,0.012,-1.28,-0.169,-0.229],"approx":false},{"d":"2026-06-07","a":"BTC","tz":"EDT","p9":61859.21,"pct":[0.348,0.317,0.444,0.235,-0.891,-0.018,-0.179,1.572,2.34,2.819,2.167,2.007,2.002],"approx":false},{"d":"2026-06-07","a":"SOL","tz":"EDT","p9":64.33,"pct":[1.026,1.275,1.554,0.979,-0.606,0.56,0.482,2.316,3.373,3.715,2.891,3.311,3.171],"approx":false},{"d":"2026-06-14","a":"BTC","tz":"EDT","p9":64297.48,"pct":[-0.473,-0.6,-0.93,-0.811,-0.825,-0.512,1.531,1.688,2.202,2.008,1.84,1.765,2.48],"approx":false},{"d":"2026-06-14","a":"SOL","tz":"EDT","p9":67.78,"pct":[-0.516,-0.443,-0.649,-0.516,-0.31,0.029,3.511,3.939,5.178,4.942,4.751,4.721,5.105],"approx":false},{"d":"2026-06-21","a":"BTC","tz":"EDT","p9":64122.0,"pct":[0.019,-0.09,-0.089,0.016,0.006,-0.542,-0.615,-0.627,-1.38,-0.488,0.635,0.079,-0.366],"approx":false},{"d":"2026-06-21","a":"SOL","tz":"EDT","p9":73.65,"pct":[0.665,0.937,0.815,0.76,1.046,-0.299,-0.693,-0.815,-1.602,-0.38,0.978,0.258,-0.163],"approx":false},{"d":"2026-06-28","a":"BTC","tz":"EDT","p9":60211.11,"pct":[-0.679,-1.013,-1.18,-1.133,-1.364,-1.073,-1.427,-2.059,-1.225,-1.078,-1.44,-0.932,-0.435],"approx":false},{"d":"2026-06-28","a":"SOL","tz":"EDT","p9":71.87,"pct":[0.306,-0.431,-0.445,-0.96,-1.586,-1.322,-1.948,-2.282,-0.668,-0.292,-0.529,0.445,1.127],"approx":false},{"d":"2026-07-05","a":"BTC","tz":"EDT","p9":62681.1,"pct":[-0.002,-0.157,-0.166,0.132,0.065,0.006,0.573,1.593,1.445,1.623,1.316,1.141,0.891],"approx":false},{"d":"2026-07-05","a":"SOL","tz":"EDT","p9":80.76,"pct":[0.743,0.409,0.47,0.31,0.347,0.396,1.288,1.312,1.028,1.783,0.966,0.31,0.05],"approx":false},{"d":"2026-07-12","a":"BTC","tz":"EDT","p9":63989.6,"pct":[0.228,0.22,0.081,0.183,0.322,0.274,-0.17,-0.215,-0.385,0.05,-0.954,-1.031,-1.931],"approx":false},{"d":"2026-07-12","a":"SOL","tz":"EDT","p9":77.19,"pct":[0.363,0.466,0.207,0.505,0.622,0.35,-0.117,-0.544,-0.35,0.427,-1.127,-0.92,-1.71],"approx":false},{"d":"2026-07-19","a":"BTC","tz":"EDT","p9":64402.31,"pct":[0.202,0.152,0.155,-0.05,0.019,0.135,-0.055,0.353,0.445,0.156,0.287,0.591,0.644],"approx":false},{"d":"2026-07-19","a":"SOL","tz":"EDT","p9":76.02,"pct":[0.263,-0.132,-0.079,-0.342,-0.171,0.158,-0.316,0.105,0.474,0.724,0.487,1.263,0.973],"approx":false},{"d":"2026-07-26","a":"BTC","tz":"EDT","p9":64409.39,"pct":[0.467,0.408,0.339,0.426,0.366,0.294,0.592,1.461,1.443,1.029,1.139,1.095,1.266],"approx":false},{"d":"2026-07-26","a":"SOL","tz":"EDT","p9":74.89,"pct":[0.788,0.855,0.654,0.681,0.601,0.588,1.015,2.444,2.51,1.936,2.19,2.07,2.03],"approx":false},{"d":"2026-08-02","a":"BTC","tz":"EDT","p9":63058.45,"pct":[-0.02,0.089,0.271,0.375,0.505,0.589,0.707,0.462,0.7,0.282,0.112,0.008,-0.438],"approx":false},{"d":"2026-08-02","a":"SOL","tz":"EDT","p9":72.9,"pct":[0.178,0.329,0.562,0.905,1.125,1.084,1.509,1.015,1.015,0.439,0.151,0.178,0.0],"approx":false},{"d":"2026-08-09","a":"BTC","tz":"EDT","p9":64900.43,"pct":[0.426,0.442,0.39,0.392,0.365,0.293,0.389,0.177,-0.067,0.031,0.376,0.221,0.04],"approx":false},{"d":"2026-08-09","a":"SOL","tz":"EDT","p9":76.36,"pct":[1.388,1.257,1.061,1.113,1.126,1.179,1.31,0.589,-0.131,0.249,0.72,0.602,0.367],"approx":false},{"d":"2026-08-16","a":"BTC","tz":"EDT","p9":62935.7,"pct":[0.209,0.402,0.244,0.226,0.171,0.106,-0.11,-0.151,-0.165,-0.137,0.171,0.639,0.687],"approx":false},{"d":"2026-08-16","a":"SOL","tz":"EDT","p9":75.23,"pct":[0.452,0.439,0.053,-0.053,-0.013,-0.266,-1.183,-0.944,-0.811,-0.811,-0.173,0.346,0.386],"approx":false},{"d":"2026-08-23","a":"BTC","tz":"EDT","p9":77201.62,"pct":[-0.09,0.263,-0.036,0.179,0.164,0.24,0.84,0.516,0.676,0.599,-0.361,0.355,-0.343],"approx":false},{"d":"2026-08-23","a":"SOL","tz":"EDT","p9":94.59,"pct":[0.825,0.877,0.55,0.751,0.518,0.507,0.814,1.057,0.899,1.015,-0.761,0.0,-0.983],"approx":false},{"d":"2026-08-30","a":"BTC","tz":"EDT","p9":78781.04,"pct":[0.034,0.694,0.29,0.319,0.097,-0.24,-0.178,-0.458,-1.424,-1.094,-1.461,-1.679,-1.312],"approx":false},{"d":"2026-08-30","a":"SOL","tz":"EDT","p9":106.11,"pct":[0.17,0.745,0.283,0.547,-0.273,-1.263,-1.555,-2.158,-4.109,-3.741,-4.335,-4.382,-3.921],"approx":false},{"d":"2026-09-06","a":"BTC","tz":"EDT","p9":79927.8,"pct":[-0.278,-0.317,-0.241,0.017,-0.134,-0.025,0.015,0.148,0.514,0.281,-0.004,-0.08,-0.423],"approx":false},{"d":"2026-09-06","a":"SOL","tz":"EDT","p9":106.18,"pct":[-0.32,0.019,0.151,-0.565,-0.518,-0.113,-0.895,0.198,null,-0.763,-0.49,-0.904,-0.904],"approx":true}];
+const HOURS = [12,13,14,15,16,17,18,19,20,21,22,23,24];
+const ASSETS = [["BTC","BTC/USD","--btc"],["SOL","SOL/USD","--sol"]];
+const hourLabel = h => h === 12 ? "12 PM (noon)" : h === 24 ? "12 AM (midnight)" : `${h - 12} PM`;
+const shortHour = h => h === 12 ? "12 PM" : h === 24 ? "12 AM" : `${h - 12} PM`;
+const signOf = v => v == null ? "na" : v > 0 ? "up" : v < 0 ? "down" : "flat";
+const GLYPH = {up:"▲", down:"▼", flat:"–", na:"·"};
+const fmtPct = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "%";
+const fmtPrice = v => v.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric"});
+const shortDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-US", {month:"short", day:"numeric", year:"2-digit"});
+
+const byDay = new Map();
+for (const r of DATA) {
+  if (!byDay.has(r.d)) byDay.set(r.d, {});
+  byDay.get(r.d)[r.a] = r;
+}
+const days = [...byDay.keys()].sort();
+document.getElementById("n-sundays").textContent = days.length;
+document.getElementById("range").textContent = `${fmtDate(days[0])} to ${fmtDate(days[days.length - 1])}`;
+
+const sel = document.getElementById("end-hour");
+for (const h of HOURS) {
+  const o = document.createElement("option");
+  o.value = h; o.textContent = hourLabel(h);
+  if (h === 21) o.selected = true;
+  sel.appendChild(o);
+}
+const idx = h => HOURS.indexOf(h);
+
+function renderTiles(h) {
+  const el = document.getElementById("tiles");
+  el.innerHTML = "";
+  for (const [key, name, token] of ASSETS) {
+    const rows = DATA.filter(r => r.a === key && r.pct[idx(h)] != null);
+    const up = rows.filter(r => r.pct[idx(h)] > 0).length;
+    const down = rows.filter(r => r.pct[idx(h)] < 0).length;
+    const flat = rows.length - up - down;
+    const avg = rows.reduce((s, r) => s + r.pct[idx(h)], 0) / (rows.length || 1);
+    const latest = rows[rows.length - 1];
+    const last8 = rows.slice(-8).map(r => { const s = signOf(r.pct[idx(h)]); return `<span class="${s}" title="${fmtDate(r.d)} ${fmtPct(r.pct[idx(h)])}">${GLYPH[s]}</span>`; }).join("");
+    const tile = document.createElement("article");
+    tile.className = "tile";
+    tile.style.setProperty("--asset", `var(${token})`);
+    tile.innerHTML = `
+      <div class="tile-head"><span class="asset"><i></i>${name}</span><span class="window">9 AM → ${shortHour(h)} Eastern</span></div>
+      <div class="counts">
+        <span class="count up"><b>${up}</b><span>up</span></span>
+        <span class="count down"><b>${down}</b><span>down</span></span>
+        ${flat ? `<span class="count flat"><b>${flat}</b><span>flat</span></span>` : ""}
+      </div>
+      <dl class="kv">
+        <dt>Average move</dt><dd class="mono">${fmtPct(avg)} over ${rows.length} Sundays</dd>
+        <dt>Latest</dt><dd><span class="mono">${fmtDate(latest.d)}</span> · <span class="mono ${signOf(latest.pct[idx(h)])}">${latest.approx ? "≈ " : ""}${fmtPct(latest.pct[idx(h)])}</span></dd>
+        <dt>Last 8</dt><dd class="glyphs">${last8}</dd>
+      </dl>`;
+    el.appendChild(tile);
+  }
+}
+
+const tip = document.getElementById("tip");
+function showTip(text, x, y) { tip.textContent = text; tip.style.left = x + "px"; tip.style.top = y + "px"; tip.classList.add("show"); }
+function hideTip() { tip.classList.remove("show"); }
+
+function renderStrip(h) {
+  const strip = document.getElementById("strip");
+  strip.innerHTML = "";
+  for (const [key, name] of ASSETS) {
+    const lab = document.createElement("div"); lab.className = "lab"; lab.textContent = key;
+    const cells = document.createElement("div"); cells.className = "cells"; cells.setAttribute("role", "list");
+    for (const d of days) {
+      const r = byDay.get(d)[key];
+      const v = r ? r.pct[idx(h)] : null;
+      const s = signOf(v);
+      const c = document.createElement("button");
+      c.type = "button"; c.className = "cell " + s + (r && r.approx ? " approx" : ""); c.setAttribute("role", "listitem");
+      const text = `${name} · ${shortDate(d)} · ${v == null ? "no data" : (r.approx ? "≈ " : "") + fmtPct(v)}`;
+      c.setAttribute("aria-label", text);
+      c.addEventListener("mouseenter", e => showTip(text, e.clientX, e.clientY));
+      c.addEventListener("mousemove", e => showTip(text, e.clientX, e.clientY));
+      c.addEventListener("mouseleave", hideTip);
+      c.addEventListener("focus", () => { const b = c.getBoundingClientRect(); showTip(text, b.left + b.width / 2, b.top); });
+      c.addEventListener("blur", hideTip);
+      cells.appendChild(c);
+    }
+    strip.appendChild(lab); strip.appendChild(cells);
+  }
+  const spacer = document.createElement("div");
+  const axis = document.createElement("div"); axis.className = "axis";
+  let lastQ = "";
+  for (const d of days) {
+    const dt = new Date(d + "T12:00:00");
+    const q = `${dt.getFullYear()}-${Math.floor(dt.getMonth() / 3)}`;
+    const span = document.createElement("span");
+    if (q !== lastQ) { span.textContent = dt.toLocaleDateString("en-US", {month:"short", year:"2-digit"}).replace(" ", " ’"); lastQ = q; }
+    axis.appendChild(span);
+  }
+  strip.appendChild(spacer); strip.appendChild(axis);
+}
+
+function pill(r, h) {
+  if (!r || r.pct[idx(h)] == null) return `<span class="pill na"><span class="g">${GLYPH.na}</span>no data</span>`;
+  const v = r.pct[idx(h)], s = signOf(v);
+  return `<span class="pill ${s}" title="${r.approx ? "approximate, from hourly snapshots" : "from exchange candles"}"><span class="g">${GLYPH[s]}</span>${r.approx ? "≈" : ""}${fmtPct(v)}</span>`;
+}
+
+function renderTable(h) {
+  const tb = document.querySelector("#table tbody");
+  tb.innerHTML = "";
+  for (const d of [...days].reverse()) {
+    const row = byDay.get(d), b = row.BTC, s = row.SOL;
+    const tz = (b || s).tz;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="date">${fmtDate(d)}<small>${tz}</small></td>
+      <td class="num">${b ? "$" + fmtPrice(b.p9) : "—"}</td>
+      <td class="num">${pill(b, h)}</td>
+      <td class="num">${s ? "$" + fmtPrice(s.p9) : "—"}</td>
+      <td class="num">${pill(s, h)}</td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function renderAll() { const h = Number(sel.value); renderTiles(h); renderStrip(h); renderTable(h); }
+sel.addEventListener("change", renderAll);
+renderAll();
+</script>
